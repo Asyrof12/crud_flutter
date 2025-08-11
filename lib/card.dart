@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class MyCard extends StatefulWidget {
   final String apiUrl;
@@ -66,6 +67,18 @@ class _MyCardState extends State<MyCard> {
     }
   }
 
+  String formatDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return '-';
+
+    try {
+      final dateTime = DateTime.parse(dateString);
+      // Format tanggal: 11 Aug 2025, 10:52
+      return DateFormat('dd MMM yyyy, HH:mm').format(dateTime);
+    } catch (e) {
+      return '-';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -88,7 +101,7 @@ class _MyCardState extends State<MyCard> {
                             Text(item['phone'] ?? 'Tidak ada nomor'),
                             const SizedBox(height: 4),
                             Text(
-                              "Created: ${item['created_at'] ?? '-'}",
+                              "Created: ${formatDate(item['created_at'])}",
                               style: const TextStyle(
                                   fontSize: 12, color: Colors.grey),
                             ),
