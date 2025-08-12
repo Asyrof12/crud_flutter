@@ -128,7 +128,53 @@ class _MyCardState extends State<MyCard> {
     }
   }
 
-  Future<void> deleteKontak(int id) async {
+  Future<void> editPhone(String id) async {
+    final idController = TextEditingController(text: id);
+    final name = nameController.text.trim();
+    final phone = phoneController.text.trim();
+
+    if (name.isEmpty || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama dan nomor harus diisi')),
+      );
+      return;
+    }
+
+    setState(() {
+      isAddingOrEditing = true;
+    });
+
+    try {
+      final url = "${widget.apiUrl}/edit"; // endpoint API edit
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'id': id, 'name': name, 'phone': phone}),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Berhasil edit kontak')),
+        );
+        Navigator.of(context).pop();
+        fetchData();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal edit (${response.statusCode})')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        isAddingOrEditing = false;
+      });
+    }
+  }
+
+  Future<void> deletePhone(int id) async {
   try {
     final response = await http.post(
       Uri.parse("${widget.apiUrl}/delete"),
@@ -216,17 +262,36 @@ class _MyCardState extends State<MyCard> {
   void showEditContactModal(Map contact) {
     nameController.text = contact['name'] ?? '';
     phoneController.text = contact['phone'] ?? '';
+    final idController =
+        TextEditingController(text: contact['id']?.toString() ?? '');
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Edit Kontak'),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Edit Kontak'),
+              Text(
+                "${idController.text}", // ID di sebelah kanan judul
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // TextField(
+                //   controller: idController, // controller untuk ID
+                //   decoration: const InputDecoration(labelText: 'ID'),
+                //   readOnly: true, // biasanya ID tidak diubah
+                // ),
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(labelText: 'Nama'),
@@ -254,15 +319,16 @@ class _MyCardState extends State<MyCard> {
               onPressed: isAddingOrEditing
                   ? null
                   : () async {
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Fungsi update belum dibuat')),
-                      );
-                      nameController.clear();
-                      phoneController.clear();
+                      await editPhone(idController.text);
                     },
-              child: const Text('Simpan'),
+              child: isAddingOrEditing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Simpan'),
             ),
           ],
         );
@@ -284,7 +350,7 @@ class _MyCardState extends State<MyCard> {
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
-              await deleteKontak(int.parse(contact['id'].toString()));
+              await deletePhone(int.parse(contact['id'].toString()));
             },
             child: const Text('Hapus'),
           ),
