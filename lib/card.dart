@@ -16,10 +16,10 @@ class _MyCardState extends State<MyCard> {
   bool isLoading = true;
   String? errorMessage;
 
-  // Controller untuk input form tambah kontak
+  // Controller untuk input form tambah & edit kontak
   final TextEditingController nameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
-  bool isAdding = false;
+  bool isAddingOrEditing = false;
 
   @override
   void initState() {
@@ -35,16 +35,9 @@ class _MyCardState extends State<MyCard> {
 
     try {
       final url = "${widget.apiUrl}/list";
-      print("🔍 Fetching from: $url");
-
       final response = await http.get(Uri.parse(url));
-
-      print("📡 Status code: ${response.statusCode}");
-      print("📦 Response body: ${response.body}");
-
       if (response.statusCode == 200) {
         final parsed = jsonDecode(response.body);
-
         if (parsed is List) {
           setState(() {
             data = parsed;
@@ -79,7 +72,6 @@ class _MyCardState extends State<MyCard> {
 
   String formatDate(String? dateString) {
     if (dateString == null || dateString.isEmpty) return '-';
-
     try {
       final dateTime = DateTime.parse(dateString);
       return DateFormat('dd MMM yyyy, HH:mm').format(dateTime);
@@ -100,7 +92,7 @@ class _MyCardState extends State<MyCard> {
     }
 
     setState(() {
-      isAdding = true;
+      isAddingOrEditing = true;
     });
 
     try {
@@ -131,15 +123,18 @@ class _MyCardState extends State<MyCard> {
       );
     } finally {
       setState(() {
-        isAdding = false;
+        isAddingOrEditing = false;
       });
     }
   }
 
   void showAddContactModal() {
+    nameController.clear();
+    phoneController.clear();
+
     showDialog(
       context: context,
-      barrierDismissible: false, // Tidak bisa ditutup dengan tap di luar
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           title: const Text('Tambah Kontak'),
@@ -161,7 +156,7 @@ class _MyCardState extends State<MyCard> {
           ),
           actions: [
             TextButton(
-              onPressed: isAdding
+              onPressed: isAddingOrEditing
                   ? null
                   : () {
                       Navigator.of(context).pop();
@@ -171,12 +166,12 @@ class _MyCardState extends State<MyCard> {
               child: const Text('Batal'),
             ),
             ElevatedButton(
-              onPressed: isAdding
+              onPressed: isAddingOrEditing
                   ? null
                   : () async {
                       await addPhone();
                     },
-              child: isAdding
+              child: isAddingOrEditing
                   ? const SizedBox(
                       width: 20,
                       height: 20,
@@ -188,6 +183,89 @@ class _MyCardState extends State<MyCard> {
           ],
         );
       },
+    );
+  }
+
+  void showEditContactModal(Map contact) {
+    nameController.text = contact['name'] ?? '';
+    phoneController.text = contact['phone'] ?? '';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Kontak'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nama'),
+                ),
+                TextField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(labelText: 'Nomor Telepon'),
+                  keyboardType: TextInputType.phone,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isAddingOrEditing
+                  ? null
+                  : () {
+                      Navigator.of(context).pop();
+                      nameController.clear();
+                      phoneController.clear();
+                    },
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: isAddingOrEditing
+                  ? null
+                  : () async {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Fungsi update belum dibuat')),
+                      );
+                      nameController.clear();
+                      phoneController.clear();
+                    },
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showDeleteConfirmDialog(Map contact) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Konfirmasi Hapus'),
+        content: Text('Hapus kontak "${contact['name']}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Nanti tambahkan fungsi delete API di sini
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Fungsi hapus belum dibuat')),
+              );
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -216,6 +294,19 @@ class _MyCardState extends State<MyCard> {
                               "Created: ${formatDate(item['created_at'])}",
                               style: const TextStyle(
                                   fontSize: 12, color: Colors.blue),
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () => showEditContactModal(item),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () => showDeleteConfirmDialog(item),
                             ),
                           ],
                         ),
