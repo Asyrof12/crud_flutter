@@ -128,6 +128,33 @@ class _MyCardState extends State<MyCard> {
     }
   }
 
+  Future<void> deleteKontak(int id) async {
+  try {
+    final response = await http.post(
+      Uri.parse("${widget.apiUrl}/delete"),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id': id}),
+    );
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil dihapus'),
+        backgroundColor: Colors.red,),
+      );
+      await fetchData(); // refresh data
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menghapus (${response.statusCode})'),
+        backgroundColor: const Color.fromARGB(255, 71, 71, 71),),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  }
+}
+
   void showAddContactModal() {
     nameController.clear();
     phoneController.clear();
@@ -189,36 +216,17 @@ class _MyCardState extends State<MyCard> {
   void showEditContactModal(Map contact) {
     nameController.text = contact['name'] ?? '';
     phoneController.text = contact['phone'] ?? '';
-    final idController =
-        TextEditingController(text: contact['id']?.toString() ?? '');
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Edit Kontak'),
-              Text(
-                "${idController.text}", // ID di sebelah kanan judul
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
+          title: const Text('Edit Kontak'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // TextField(
-                //   controller: idController, // controller untuk ID
-                //   decoration: const InputDecoration(labelText: 'ID'),
-                //   readOnly: true, // biasanya ID tidak diubah
-                // ),
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(labelText: 'Nama'),
@@ -274,12 +282,9 @@ class _MyCardState extends State<MyCard> {
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).pop();
-              // Nanti tambahkan fungsi delete API di sini
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Fungsi hapus belum dibuat')),
-              );
+              await deleteKontak(int.parse(contact['id'].toString()));
             },
             child: const Text('Hapus'),
           ),
