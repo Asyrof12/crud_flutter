@@ -34,7 +34,7 @@ class _MyCardState extends State<MyCard> {
     });
 
     try {
-      final url = "${widget.apiUrl}/list";
+      final url = "${widget.apiUrl}/list-all";
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final parsed = jsonDecode(response.body);

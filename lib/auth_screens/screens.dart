@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:card/card.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const LoginApp());
 }
 
@@ -26,19 +32,22 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderStateMixin {
   bool isLoginSelected = true;
+  bool isLoading = false;
 
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   late final AnimationController _animController;
   late final Animation<double> _slideAnimation;
 
   static const double popupWidthMax = 400;
-  static const double popupMinHeight = 430;
-
+  static const double popupMinHeight = 480; // Tambah untuk phone field
   static const Color activeColor = Colors.black;
   static const Color inactiveTextColor = Colors.black87;
+
+  String get baseUrl => dotenv.env['API_URL'] ?? 'http://localhost:3085';
 
   @override
   void initState() {
@@ -47,17 +56,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _slideAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-      parent: _animController,
-      curve: Curves.easeInOut,
-    ));
+    _slideAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
     _animController.dispose();
     nameController.dispose();
-    emailController.dispose();
+    usernameController.dispose();
+    phoneController.dispose();
     passwordController.dispose();
     super.dispose();
   }
@@ -67,7 +76,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       setState(() {
         isLoginSelected = loginSelected;
         nameController.clear();
-        emailController.clear();
+        usernameController.clear();
+        phoneController.clear();
         passwordController.clear();
 
         if (isLoginSelected) {
@@ -78,6 +88,122 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       });
     }
   }
+
+  Future<Map<String, dynamic>> loginUser(String username, String password) async {
+    final uri = Uri.parse('$baseUrl/login');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': username, 'password': password}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Login gagal: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> registerUser(String name, String username, String password, String phone) async {
+    final uri = Uri.parse('$baseUrl/register');
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'name': name,
+        'username': username,
+        'password': password,
+        'phone': phone,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Registrasi gagal: ${response.body}');
+    }
+  }
+
+  void onSubmit() async {
+  if (!isLoginSelected) {
+    if (nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nama lengkap harus diisi')),
+      );
+      return;
+    }
+    if (usernameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Username harus diisi')),
+      );
+      return;
+    }
+    if (phoneController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nomor telepon harus diisi')),
+      );
+      return;
+    }
+  } else {
+    if (usernameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Username harus diisi')),
+      );
+      return;
+    }
+  }
+
+  if (passwordController.text.trim().isEmpty || passwordController.text.length < 6) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Password minimal 6 karakter')),
+    );
+    return;
+  }
+
+  setState(() {
+    isLoading = true;
+  });
+
+  try {
+    if (isLoginSelected) {
+      final result = await loginUser(usernameController.text.trim(), passwordController.text.trim());
+      print('Login sukses: $result');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login berhasil!')),
+      );
+      passwordController.clear();
+
+      // Navigasi ke MyCard setelah login berhasil
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => MyCard(apiUrl: baseUrl)),
+      );
+
+    } else {
+      final result = await registerUser(
+        nameController.text.trim(),
+        usernameController.text.trim(),
+        passwordController.text.trim(),
+        phoneController.text.trim(),
+      );
+      print('Register sukses: $result');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registrasi berhasil! Silakan login.')),
+      );
+      toggleSelection(true);
+      passwordController.clear();
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  } finally {
+    setState(() {
+      isLoading = false;
+    });
+  }
+}
+
 
   Widget buildToggleButtons() {
     final double toggleWidth = (popupWidthMax - 48) / 2;
@@ -159,13 +285,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: TextField(
-                      key: const ValueKey('email_login'),
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
+                      key: const ValueKey('username_login'),
+                      controller: usernameController,
                       decoration: const InputDecoration(
-                        labelText: "Email",
+                        labelText: "Username",
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email),
+                        prefixIcon: Icon(Icons.person),
                       ),
                     ),
                   ),
@@ -199,13 +324,25 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: TextField(
-                      key: const ValueKey('email_register'),
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
+                      key: const ValueKey('username_register'),
+                      controller: usernameController,
                       decoration: const InputDecoration(
-                        labelText: "Email",
+                        labelText: "Username",
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email),
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: TextField(
+                      key: const ValueKey('phone_register'),
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: "Nomor Telepon",
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.phone),
                       ),
                     ),
                   ),
@@ -225,22 +362,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     );
   }
 
-  void onSubmit() {
-    if (isLoginSelected) {
-      print("Login with Email: ${emailController.text}");
-      print("Password: ${passwordController.text}");
-    } else {
-      print("Register with Name: ${nameController.text}");
-      print("Email: ${emailController.text}");
-      print("Password: ${passwordController.text}");
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(isLoginSelected ? 'Login pressed' : 'Register pressed'),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -251,7 +372,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       body: Center(
         child: Container(
           width: popupWidth,
-          constraints: const BoxConstraints(
+          constraints: BoxConstraints(
             minHeight: popupMinHeight,
             maxWidth: popupWidthMax,
           ),
@@ -293,17 +414,19 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: onSubmit,
+                  onPressed: isLoading ? null : onSubmit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: activeColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: Text(
-                    isLoginSelected ? 'Login' : 'Register',
-                    style: const TextStyle(color: Colors.white),
-                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          isLoginSelected ? 'Login' : 'Register',
+                          style: const TextStyle(color: Colors.white),
+                        ),
                 ),
               ),
             ],
