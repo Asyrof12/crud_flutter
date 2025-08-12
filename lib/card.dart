@@ -189,17 +189,36 @@ class _MyCardState extends State<MyCard> {
   void showEditContactModal(Map contact) {
     nameController.text = contact['name'] ?? '';
     phoneController.text = contact['phone'] ?? '';
+    final idController =
+        TextEditingController(text: contact['id']?.toString() ?? '');
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Edit Kontak'),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Edit Kontak'),
+              Text(
+                "${idController.text}", // ID di sebelah kanan judul
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // TextField(
+                //   controller: idController, // controller untuk ID
+                //   decoration: const InputDecoration(labelText: 'ID'),
+                //   readOnly: true, // biasanya ID tidak diubah
+                // ),
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(labelText: 'Nama'),
