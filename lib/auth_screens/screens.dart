@@ -30,7 +30,8 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderStateMixin {
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with SingleTickerProviderStateMixin {
   bool isLoginSelected = true;
   bool isLoading = false;
 
@@ -43,7 +44,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   late final Animation<double> _slideAnimation;
 
   static const double popupWidthMax = 400;
-  static const double popupMinHeight = 480; // Tambah untuk phone field
   static const Color activeColor = Colors.black;
   static const Color inactiveTextColor = Colors.black87;
 
@@ -89,7 +89,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     }
   }
 
-  Future<Map<String, dynamic>> loginUser(String username, String password) async {
+  Future<Map<String, dynamic>> loginUser(
+      String username, String password) async {
     final uri = Uri.parse('$baseUrl/login');
     final response = await http.post(
       uri,
@@ -104,7 +105,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     }
   }
 
-  Future<Map<String, dynamic>> registerUser(String name, String username, String password, String phone) async {
+  Future<Map<String, dynamic>> registerUser(
+      String name, String username, String password, String phone) async {
     final uri = Uri.parse('$baseUrl/register');
     final response = await http.post(
       uri,
@@ -125,156 +127,150 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   }
 
   void onSubmit() async {
-  if (!isLoginSelected) {
-    if (nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama lengkap harus diisi')),
-      );
-      return;
-    }
-    if (usernameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Username harus diisi')),
-      );
-      return;
-    }
-    if (phoneController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nomor telepon harus diisi')),
-      );
-      return;
-    }
-  } else {
-    if (usernameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Username harus diisi')),
-      );
-      return;
-    }
-  }
-
-  if (passwordController.text.trim().isEmpty || passwordController.text.length < 6) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password minimal 6 karakter')),
-    );
-    return;
-  }
-
-  setState(() {
-    isLoading = true;
-  });
-
-  try {
-    if (isLoginSelected) {
-      final result = await loginUser(usernameController.text.trim(), passwordController.text.trim());
-      print('Login sukses: $result');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login berhasil!')),
-      );
-      passwordController.clear();
-
-      // Navigasi ke MyCard setelah login berhasil
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => MyCard(apiUrl: baseUrl)),
-      );
-
+    if (!isLoginSelected) {
+      if (nameController.text.trim().isEmpty) {
+        _showSnack('Nama lengkap harus diisi');
+        return;
+      }
+      if (usernameController.text.trim().isEmpty) {
+        _showSnack('Username harus diisi');
+        return;
+      }
+      if (phoneController.text.trim().isEmpty) {
+        _showSnack('Nomor telepon harus diisi');
+        return;
+      }
     } else {
-      final result = await registerUser(
-        nameController.text.trim(),
-        usernameController.text.trim(),
-        passwordController.text.trim(),
-        phoneController.text.trim(),
-      );
-      print('Register sukses: $result');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registrasi berhasil! Silakan login.')),
-      );
-      toggleSelection(true);
-      passwordController.clear();
+      if (usernameController.text.trim().isEmpty) {
+        _showSnack('Username harus diisi');
+        return;
+      }
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
-    );
-  } finally {
-    setState(() {
-      isLoading = false;
-    });
-  }
-}
 
+    if (passwordController.text.trim().isEmpty ||
+        passwordController.text.length < 6) {
+      _showSnack('Password minimal 6 karakter');
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      if (isLoginSelected) {
+        final result = await loginUser(
+            usernameController.text.trim(), passwordController.text.trim());
+        print('Login sukses: $result');
+        _showSnack('Login berhasil!');
+        passwordController.clear();
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MyCard(apiUrl: baseUrl)),
+        );
+      } else {
+        final result = await registerUser(
+          nameController.text.trim(),
+          usernameController.text.trim(),
+          passwordController.text.trim(),
+          phoneController.text.trim(),
+        );
+        print('Register sukses: $result');
+        _showSnack('Registrasi berhasil! Silakan login.');
+        toggleSelection(true);
+        passwordController.clear();
+      }
+    } catch (e) {
+      _showSnack('Error: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 
   Widget buildToggleButtons() {
-    final double toggleWidth = (popupWidthMax - 48) / 2;
-    return Container(
-      width: popupWidthMax,
-      height: 44,
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Stack(
-        children: [
-          AnimatedBuilder(
-            animation: _slideAnimation,
-            builder: (context, child) {
-              return Align(
-                alignment: Alignment(-1 + 2 * _slideAnimation.value, 0),
-                child: Container(
-                  width: toggleWidth,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: activeColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              );
-            },
-          ),
-          Row(
-            children: [
-              SizedBox(
+  final double screenWidth = MediaQuery.of(context).size.width;
+  final double containerWidth = screenWidth > popupWidthMax
+      ? popupWidthMax
+      : screenWidth - 40;
+  final double toggleWidth = (containerWidth - 8) / 2; // 8 padding kiri-kanan
+
+  return Container(
+    width: containerWidth,
+    height: 44,
+    decoration: BoxDecoration(
+      color: Colors.grey[300],
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Stack(
+      children: [
+        AnimatedBuilder(
+          animation: _slideAnimation,
+          builder: (context, child) {
+            return Align(
+              alignment: Alignment(-1 + 2 * _slideAnimation.value, 0),
+              child: Container(
                 width: toggleWidth,
                 height: 44,
-                child: TextButton(
-                  onPressed: () => toggleSelection(true),
-                  style: TextButton.styleFrom(
-                    foregroundColor: isLoginSelected ? Colors.white : inactiveTextColor,
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  child: const Text('Sign In'),
+                decoration: BoxDecoration(
+                  color: activeColor,
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              SizedBox(
-                width: toggleWidth,
-                height: 44,
-                child: TextButton(
-                  onPressed: () => toggleSelection(false),
-                  style: TextButton.styleFrom(
-                    foregroundColor: !isLoginSelected ? Colors.white : inactiveTextColor,
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+            );
+          },
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => toggleSelection(true),
+                style: TextButton.styleFrom(
+                  foregroundColor:
+                      isLoginSelected ? Colors.white : inactiveTextColor,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                  child: const Text('Sign Up'),
                 ),
+                child: const Text('Sign In', overflow: TextOverflow.ellipsis),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+            Expanded(
+              child: TextButton(
+                onPressed: () => toggleSelection(false),
+                style: TextButton.styleFrom(
+                  foregroundColor:
+                      !isLoginSelected ? Colors.white : inactiveTextColor,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                child: const Text('Sign Up', overflow: TextOverflow.ellipsis),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget buildInputFields() {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+      transitionBuilder: (child, animation) =>
+          FadeTransition(opacity: animation, child: child),
       child: Padding(
         key: ValueKey(isLoginSelected),
         padding: const EdgeInsets.only(top: 8),
@@ -365,71 +361,76 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double popupWidth = screenWidth > popupWidthMax ? popupWidthMax : screenWidth - 40;
+    final double popupWidth =
+        screenWidth > popupWidthMax ? popupWidthMax : screenWidth - 40;
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
-      body: Center(
-        child: Container(
-          width: popupWidth,
-          constraints: BoxConstraints(
-            minHeight: popupMinHeight,
-            maxWidth: popupWidthMax,
-          ),
-          padding: const EdgeInsets.all(24),
-          margin: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 15,
-                offset: Offset(0, 5),
-              )
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                "Welcome",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              top: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Container(
+              width: popupWidth,
+              padding: const EdgeInsets.all(24),
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 15,
+                    offset: Offset(0, 5),
+                  )
+                ],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                "Silakan masuk atau daftar untuk melanjutkan",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              buildToggleButtons(),
-              const SizedBox(height: 24),
-              buildInputFields(),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : onSubmit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: activeColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Welcome",
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          isLoginSelected ? 'Login' : 'Register',
-                          style: const TextStyle(color: Colors.white),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Silakan masuk atau daftar untuk melanjutkan",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  buildToggleButtons(),
+                  const SizedBox(height: 24),
+                  buildInputFields(),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : onSubmit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: activeColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                ),
+                      ),
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              isLoginSelected ? 'Login' : 'Register',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
