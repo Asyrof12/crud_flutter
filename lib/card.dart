@@ -174,202 +174,215 @@ class _MyCardState extends State<MyCard> {
   }
 
   Future<void> deletePhone(int id) async {
-  try {
-    final response = await http.post(
-      Uri.parse("${widget.apiUrl}/delete"),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'id': id}),
-    );
-
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data berhasil dihapus'),
-        backgroundColor: Colors.red,),
+    try {
+      final response = await http.post(
+        Uri.parse("${widget.apiUrl}/delete"),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'id': id}),
       );
-      await fetchData(); // refresh data
-    } else {
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data berhasil dihapus'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        await fetchData(); // refresh data
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus (${response.statusCode})'),
+            backgroundColor: const Color.fromARGB(255, 71, 71, 71),
+          ),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menghapus (${response.statusCode})'),
-        backgroundColor: const Color.fromARGB(255, 71, 71, 71),),
+        SnackBar(content: Text('Error: $e')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
-    );
   }
-}
 
   void showAddContactModal() {
-  final localNameController = TextEditingController();
-  final localPhoneController = TextEditingController();
-  final scaffoldContext = context; // context Scaffold utama
+    final localNameController = TextEditingController();
+    final localPhoneController = TextEditingController();
+    final scaffoldContext = context; // context Scaffold utama
 
-  showDialog(
-    context: scaffoldContext,
-    barrierDismissible: false,
-    builder: (dialogContext) {
-      bool isAdding = false;
+    showDialog(
+      context: scaffoldContext,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        bool isAdding = false;
 
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('Tambah Kontak'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: localNameController,
-                    decoration: const InputDecoration(labelText: 'Nama'),
-                  ),
-                  TextField(
-                    controller: localPhoneController,
-                    decoration: const InputDecoration(labelText: 'Nomor Telepon'),
-                    keyboardType: TextInputType.phone,
-                  ),
-                ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Tambah Kontak'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: localNameController,
+                      decoration: const InputDecoration(labelText: 'Nama'),
+                    ),
+                    TextField(
+                      controller: localPhoneController,
+                      decoration:
+                          const InputDecoration(labelText: 'Nomor Telepon'),
+                      keyboardType: TextInputType.phone,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isAdding ? null : () => Navigator.of(dialogContext).pop(),
-                child: const Text('Batal'),
-              ),
-              ElevatedButton(
-                onPressed: isAdding
-                    ? null
-                    : () async {
-                        final name = localNameController.text.trim();
-                        final phone = localPhoneController.text.trim();
+              actions: [
+                TextButton(
+                  onPressed:
+                      isAdding ? null : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: isAdding
+                      ? null
+                      : () async {
+                          final name = localNameController.text.trim();
+                          final phone = localPhoneController.text.trim();
 
-                        if (name.isEmpty || phone.isEmpty) {
-                          ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                            const SnackBar(content: Text('Nama dan nomor harus diisi')),
-                          );
-                          return;
-                        }
-
-                        setState(() => isAdding = true);
-
-                        try {
-                          final url = "${widget.apiUrl}/add-phone";
-                          final response = await http.post(
-                            Uri.parse(url),
-                            headers: {'Content-Type': 'application/json'},
-                            body: jsonEncode({'name': name, 'phone': phone}),
-                          );
-
-                          if (response.statusCode == 200 || response.statusCode == 201) {
+                          if (name.isEmpty || phone.isEmpty) {
                             ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                              const SnackBar(content: Text('Berhasil tambah kontak')),
+                              const SnackBar(
+                                  content: Text('Nama dan nomor harus diisi')),
                             );
-                            Navigator.of(dialogContext).pop();
-                            fetchData();
-                          } else {
-                            ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                              SnackBar(content: Text('Gagal tambah kontak (${response.statusCode})')),
-                            );
+                            return;
                           }
-                        } catch (e) {
-                          ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                            SnackBar(content: Text('Error: $e')),
-                          );
-                        } finally {
-                          setState(() => isAdding = false);
-                        }
-                      },
-                child: isAdding
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Tambah'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
+
+                          setState(() => isAdding = true);
+
+                          try {
+                            final url = "${widget.apiUrl}/add-phone";
+                            final response = await http.post(
+                              Uri.parse(url),
+                              headers: {'Content-Type': 'application/json'},
+                              body: jsonEncode({'name': name, 'phone': phone}),
+                            );
+
+                            if (response.statusCode == 200 ||
+                                response.statusCode == 201) {
+                              ScaffoldMessenger.of(scaffoldContext)
+                                  .showSnackBar(
+                                const SnackBar(
+                                    content: Text('Berhasil tambah kontak')),
+                              );
+                              Navigator.of(dialogContext).pop();
+                              fetchData();
+                            } else {
+                              ScaffoldMessenger.of(scaffoldContext)
+                                  .showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        'Gagal tambah kontak (${response.statusCode})')),
+                              );
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                              SnackBar(content: Text('Error: $e')),
+                            );
+                          } finally {
+                            setState(() => isAdding = false);
+                          }
+                        },
+                  child: isAdding
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Tambah'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   void showEditContactModal(Map contact) {
-  nameController.text = contact['name'] ?? '';
-  phoneController.text = contact['phone'] ?? '';
-  final idController =
-      TextEditingController(text: contact['id']?.toString() ?? '');
+    nameController.text = contact['name'] ?? '';
+    phoneController.text = contact['phone'] ?? '';
+    final idController =
+        TextEditingController(text: contact['id']?.toString() ?? '');
 
-  final rootContext = context; // context Scaffold utama
+    final rootContext = context; // context Scaffold utama
 
-  showDialog(
-    context: rootContext, // pakai rootContext, bukan context biasa
-    barrierDismissible: false,
-    builder: (dialogContext) {
-      return AlertDialog(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('Edit Kontak'),
-            Text(
-              idController.text,
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    showDialog(
+      context: rootContext, // pakai rootContext, bukan context biasa
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Nama'),
-              ),
-              TextField(
-                controller: phoneController,
-                decoration: const InputDecoration(labelText: 'Nomor Telepon'),
-                keyboardType: TextInputType.phone,
+              const Text('Edit Kontak'),
+              Text(
+                idController.text,
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: isAddingOrEditing
-                ? null
-                : () {
-                    Navigator.of(dialogContext).pop();
-                    nameController.clear();
-                    phoneController.clear();
-                  },
-            child: const Text('Batal'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Nama'),
+                ),
+                TextField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(labelText: 'Nomor Telepon'),
+                  keyboardType: TextInputType.phone,
+                ),
+              ],
+            ),
           ),
-          ElevatedButton(
-            onPressed: isAddingOrEditing
-                ? null
-                : () async {
-                    Navigator.of(dialogContext).pop(); // tutup dialog dulu
-                    await editPhone(idController.text);
-                    ScaffoldMessenger.of(rootContext).showSnackBar(
-                      const SnackBar(content: Text('Kontak berhasil diubah')),
-                    );
-                  },
-            child: isAddingOrEditing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
-                  )
-                : const Text('Simpan'),
-          ),
-        ],
-      );
-    },
-  );
-}
-
+          actions: [
+            TextButton(
+              onPressed: isAddingOrEditing
+                  ? null
+                  : () {
+                      Navigator.of(dialogContext).pop();
+                      nameController.clear();
+                      phoneController.clear();
+                    },
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: isAddingOrEditing
+                  ? null
+                  : () async {
+                      Navigator.of(dialogContext).pop(); // tutup dialog dulu
+                      await editPhone(idController.text);
+                      ScaffoldMessenger.of(rootContext).showSnackBar(
+                        const SnackBar(content: Text('Kontak berhasil diubah')),
+                      );
+                    },
+              child: isAddingOrEditing
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void showDeleteConfirmDialog(Map contact) {
     showDialog(
@@ -397,147 +410,159 @@ class _MyCardState extends State<MyCard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: Builder(
-          builder: (context) {
-            return IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () async {
-                final RenderBox button =
-                    context.findRenderObject() as RenderBox;
-                final RenderBox overlay =
-                    Overlay.of(context).context.findRenderObject() as RenderBox;
+        appBar: AppBar(
+          leading: Builder(
+            builder: (context) {
+              return IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () async {
+                  final RenderBox button =
+                      context.findRenderObject() as RenderBox;
+                  final RenderBox overlay = Overlay.of(context)
+                      .context
+                      .findRenderObject() as RenderBox;
 
-                final RelativeRect position = RelativeRect.fromRect(
-                  Rect.fromPoints(
-                    button.localToGlobal(Offset.zero, ancestor: overlay),
-                    button.localToGlobal(button.size.bottomRight(Offset.zero),
-                        ancestor: overlay),
-                  ),
-                  Offset.zero & overlay.size,
-                );
+                  final RelativeRect position = RelativeRect.fromRect(
+                    Rect.fromPoints(
+                      button.localToGlobal(Offset.zero, ancestor: overlay),
+                      button.localToGlobal(button.size.bottomRight(Offset.zero),
+                          ancestor: overlay),
+                    ),
+                    Offset.zero & overlay.size,
+                  );
 
-                final selected = await showMenu<String>(
-                  context: context,
-                  position: position,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  items: [
-                    const PopupMenuItem(
-                      value: 'contacts',
-                      child: Row(
-                        children: [
-                          Icon(Icons.contacts, size: 20),
-                          SizedBox(width: 8),
-                          Text('Daftar Kontak'),
-                        ],
-                      ),
+                  final selected = await showMenu<String>(
+                    context: context,
+                    position: position,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const PopupMenuItem(
-                      value: 'about',
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline, size: 20),
-                          SizedBox(width: 8),
-                          Text('About Aplikasi'),
-                        ],
+                    items: [
+                      const PopupMenuItem(
+                        value: 'contacts',
+                        child: Row(
+                          children: [
+                            Icon(Icons.contacts, size: 20),
+                            SizedBox(width: 8),
+                            Text('Daftar Kontak'),
+                          ],
+                        ),
                       ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'settings',
-                      child: Row(
-                        children: [
-                          Icon(Icons.settings, size: 20),
-                          SizedBox(width: 8),
-                          Text('Setting'),
-                        ],
+                      const PopupMenuItem(
+                        value: 'about',
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 20),
+                            SizedBox(width: 8),
+                            Text('About Aplikasi'),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                );
-                if (selected != null) {
-                  if (selected == 'contacts') {
-                    print('Buka Daftar Kontak');
-                  } else if (selected == 'about') {
-                    print('Buka Tentang Aplikasi');
-                  } else if (selected == 'settings') {
-                    print('Buka Setting');
+                      const PopupMenuItem(
+                        value: 'settings',
+                        child: Row(
+                          children: [
+                            Icon(Icons.settings, size: 20),
+                            SizedBox(width: 8),
+                            Text('Setting'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                  if (selected != null) {
+                    if (selected == 'contacts') {
+                      print('Buka Daftar Kontak');
+                    } else if (selected == 'about') {
+                      print('Buka Tentang Aplikasi');
+                    } else if (selected == 'settings') {
+                      print('Buka Setting');
+                    }
                   }
-                }
-              },
-            );
-          },
+                },
+              );
+            },
+          ),
+          title: const Text("Daftar Kontak"),
         ),
-        title: const Text("Daftar Kontak"),
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : errorMessage != null
-              ? Center(child: Text(errorMessage!))
-              : ListView.builder(
-                  itemCount: data.length,
-                  itemBuilder: (context, index) {
-                    final item = data[index];
-                    return Card(
-                      margin: const EdgeInsets.all(8),
-                      child: ListTile(
-                        title: Text(item['name'] ?? 'Tanpa Nama'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item['phone'] ?? 'Tidak ada nomor'),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Created: ${formatDate(item['created_at'])}",
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.blue),
-                            ),
-                          ],
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : errorMessage != null
+                ? Center(child: Text(errorMessage!))
+                : ListView.builder(
+                    itemCount: data.length,
+                    itemBuilder: (context, index) {
+                      final item = data[index];
+                      return Card(
+                        margin: const EdgeInsets.all(8),
+                        child: ListTile(
+                          title: Text(item['name'] ?? 'Tanpa Nama'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(item['phone'] ?? 'Tidak ada nomor'),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Created: ${formatDate(item['created_at'])}",
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.blue),
+                              ),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => showEditContactModal(item),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () => showDeleteConfirmDialog(item),
+                              ),
+                            ],
+                          ),
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              onPressed: () => showEditContactModal(item),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () => showDeleteConfirmDialog(item),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.only(bottom: 33), // geser ke atas 30px
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              SizedBox(
+                width: 45,
+                height: 45,
+                child: FloatingActionButton(
+                  heroTag: "refreshBtn",
+                  onPressed: isLoading ? null : fetchData,
+                  backgroundColor: Colors.blue,
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 15,
+                          height: 15,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.refresh, size: 20),
                 ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: "refreshBtn",
-            onPressed: isLoading ? null : fetchData, // disable saat loading
-            backgroundColor: Colors.blue,
-            child: isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Icon(Icons.refresh),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 45,
+                height: 45,
+                child: FloatingActionButton(
+                  heroTag: "addBtn",
+                  onPressed: showAddContactModal,
+                  child: const Icon(Icons.add, size: 20),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          FloatingActionButton(
-            heroTag: "addBtn",
-            onPressed: showAddContactModal,
-            child: const Icon(Icons.add),
-          ),
-        ],
-      )
-    );
+        ));
   }
 }
