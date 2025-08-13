@@ -87,7 +87,7 @@ class AboutPage extends StatelessWidget {
             );
           },
         ),
-        title: const Text("Tentang Aplikasi"),
+        title: const Text("About Aplikasi"),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

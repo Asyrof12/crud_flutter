@@ -35,6 +35,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   bool isLoginSelected = true;
   bool isLoading = false;
 
+  final _formKeyLogin = GlobalKey<FormState>();
+  final _formKeyRegister = GlobalKey<FormState>();
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -89,26 +92,37 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     }
   }
 
-  Future<Map<String, dynamic>> loginUser(
-      String username, String password) async {
+  // ---- API CALLS ----
+  Future<Map<String, dynamic>> _login(String username, String password) async {
     final uri = Uri.parse('$baseUrl/login');
-    final response = await http.post(
+    final res = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'username': username, 'password': password}),
     );
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Login gagal: ${response.body}');
+    if (res.statusCode != 200) {
+      throw Exception(_extractError(res.body, 'Login gagal'));
     }
+
+    final data = _safeJson(res.body);
+
+    // Jika login berhasil, lewati exception
+    if (!(data['success'] == true || (data['message']?.toLowerCase().contains('berhasil') ?? false))) {
+      throw Exception(data['message'] ?? 'Kredensial salah');
+    }
+
+    return data;
   }
 
-  Future<Map<String, dynamic>> registerUser(
-      String name, String username, String password, String phone) async {
+  Future<Map<String, dynamic>> _register({
+    required String name,
+    required String username,
+    required String password,
+    required String phone,
+  }) async {
     final uri = Uri.parse('$baseUrl/register');
-    final response = await http.post(
+    final res = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -119,152 +133,267 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       }),
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Registrasi gagal: ${response.body}');
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw Exception(_extractError(res.body, 'Registrasi gagal'));
+    }
+
+    final data = _safeJson(res.body);
+    if (!(data['success'] == true || (data['message']?.toLowerCase().contains('berhasil') ?? false))) {
+      throw Exception(data['message'] ?? 'Registrasi gagal');
+    }
+
+    return data;
+  }
+
+  Map<String, dynamic> _safeJson(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return {'message': 'Format response tidak valid'};
+    } catch (_) {
+      return {'message': 'Response bukan JSON'};
     }
   }
 
-  void onSubmit() async {
-    if (!isLoginSelected) {
-      if (nameController.text.trim().isEmpty) {
-        _showSnack('Nama lengkap harus diisi');
-        return;
-      }
-      if (usernameController.text.trim().isEmpty) {
-        _showSnack('Username harus diisi');
-        return;
-      }
-      if (phoneController.text.trim().isEmpty) {
-        _showSnack('Nomor telepon harus diisi');
-        return;
-      }
+  String _extractError(String body, String fallback) {
+    try {
+      final d = jsonDecode(body);
+      if (d is Map && d['message'] is String) return d['message'];
+    } catch (_) {}
+    return fallback;
+  }
+
+  // ---- SUBMIT ----
+  Future<void> onSubmit() async {
+    FocusScope.of(context).unfocus();
+
+    if (isLoginSelected) {
+      if (!(_formKeyLogin.currentState?.validate() ?? false)) return;
     } else {
-      if (usernameController.text.trim().isEmpty) {
-        _showSnack('Username harus diisi');
-        return;
-      }
+      if (!(_formKeyRegister.currentState?.validate() ?? false)) return;
     }
 
-    if (passwordController.text.trim().isEmpty ||
-        passwordController.text.length < 6) {
-      _showSnack('Password minimal 6 karakter');
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
 
     try {
       if (isLoginSelected) {
-        final result = await loginUser(
-            usernameController.text.trim(), passwordController.text.trim());
-        print('Login sukses: $result');
-        _showSnack('Login berhasil!');
-        passwordController.clear();
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MyCard(apiUrl: baseUrl)),
-        );
-      } else {
-        final result = await registerUser(
-          nameController.text.trim(),
+        final data = await _login(
           usernameController.text.trim(),
           passwordController.text.trim(),
-          phoneController.text.trim(),
         );
-        print('Register sukses: $result');
-        _showSnack('Registrasi berhasil! Silakan login.');
+        print('Login response: $data');
+
+        _showSnack(data['message'] ?? 'Login berhasil');
+        passwordController.clear();
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MyCard(apiUrl: dotenv.env['API_URL'] ?? ''),
+          ),
+        );
+      } else {
+        final data = await _register(
+          name: nameController.text.trim(),
+          username: usernameController.text.trim(),
+          password: passwordController.text.trim(),
+          phone: phoneController.text.trim(),
+        );
+
+        _showSnack(data['message'] ?? 'Registrasi berhasil! Silakan login.');
         toggleSelection(true);
         passwordController.clear();
       }
     } catch (e) {
-      _showSnack('Error: $e');
+      _showSnack(e.toString().replaceFirst('Exception: ', ''));
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  // ---- UI ----
+  Widget buildToggleButtons() {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double containerWidth =
+        screenWidth > popupWidthMax ? popupWidthMax : screenWidth - 40;
+    final double toggleWidth = (containerWidth - 8) / 2;
+
+    return Container(
+      width: containerWidth,
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Stack(
+        children: [
+          AnimatedBuilder(
+            animation: _slideAnimation,
+            builder: (context, child) {
+              return Align(
+                alignment: Alignment(-1 + 2 * _slideAnimation.value, 0),
+                child: Container(
+                  width: toggleWidth,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: activeColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              );
+            },
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: isLoading ? null : () => toggleSelection(true),
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        isLoginSelected ? Colors.white : inactiveTextColor,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  child: const Text('Sign In', overflow: TextOverflow.ellipsis),
+                ),
+              ),
+              Expanded(
+                child: TextButton(
+                  onPressed: isLoading ? null : () => toggleSelection(false),
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        !isLoginSelected ? Colors.white : inactiveTextColor,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  child: const Text('Sign Up', overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget buildToggleButtons() {
-  final double screenWidth = MediaQuery.of(context).size.width;
-  final double containerWidth = screenWidth > popupWidthMax
-      ? popupWidthMax
-      : screenWidth - 40;
-  final double toggleWidth = (containerWidth - 8) / 2; // 8 padding kiri-kanan
-
-  return Container(
-    width: containerWidth,
-    height: 44,
-    decoration: BoxDecoration(
-      color: Colors.grey[300],
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Stack(
-      children: [
-        AnimatedBuilder(
-          animation: _slideAnimation,
-          builder: (context, child) {
-            return Align(
-              alignment: Alignment(-1 + 2 * _slideAnimation.value, 0),
-              child: Container(
-                width: toggleWidth,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: activeColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+  Widget buildLoginForm() {
+    return Form(
+      key: _formKeyLogin,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: TextFormField(
+              key: const ValueKey('username_login'),
+              controller: usernameController,
+              decoration: const InputDecoration(
+                labelText: "Username",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person),
               ),
-            );
-          },
-        ),
-        Row(
-          children: [
-            Expanded(
-              child: TextButton(
-                onPressed: () => toggleSelection(true),
-                style: TextButton.styleFrom(
-                  foregroundColor:
-                      isLoginSelected ? Colors.white : inactiveTextColor,
-                  textStyle: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                child: const Text('Sign In', overflow: TextOverflow.ellipsis),
-              ),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Username harus diisi'
+                  : null,
             ),
-            Expanded(
-              child: TextButton(
-                onPressed: () => toggleSelection(false),
-                style: TextButton.styleFrom(
-                  foregroundColor:
-                      !isLoginSelected ? Colors.white : inactiveTextColor,
-                  textStyle: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                child: const Text('Sign Up', overflow: TextOverflow.ellipsis),
-              ),
+          ),
+          TextFormField(
+            key: const ValueKey('password_login'),
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: "Password",
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.lock),
             ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+            validator: (v) => (v == null || v.length < 6)
+                ? 'Password minimal 6 karakter'
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget buildRegisterForm() {
+    return Form(
+      key: _formKeyRegister,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: TextFormField(
+              key: const ValueKey('name_register'),
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: "Nama Lengkap",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person),
+              ),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Nama lengkap harus diisi'
+                  : null,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: TextFormField(
+              key: const ValueKey('username_register'),
+              controller: usernameController,
+              decoration: const InputDecoration(
+                labelText: "Username",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Username harus diisi'
+                  : null,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: TextFormField(
+              key: const ValueKey('phone_register'),
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: "Nomor Telepon",
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.phone),
+              ),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Nomor telepon harus diisi'
+                  : null,
+            ),
+          ),
+          TextFormField(
+            key: const ValueKey('password_register'),
+            controller: passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: "Password",
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.lock),
+            ),
+            validator: (v) => (v == null || v.length < 6)
+                ? 'Password minimal 6 karakter'
+                : null,
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget buildInputFields() {
     return AnimatedSwitcher(
@@ -274,86 +403,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: Padding(
         key: ValueKey(isLoginSelected),
         padding: const EdgeInsets.only(top: 8),
-        child: isLoginSelected
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: TextField(
-                      key: const ValueKey('username_login'),
-                      controller: usernameController,
-                      decoration: const InputDecoration(
-                        labelText: "Username",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                    ),
-                  ),
-                  TextField(
-                    key: const ValueKey('password_login'),
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: "Password",
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.lock),
-                    ),
-                  ),
-                ],
-              )
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: TextField(
-                      key: const ValueKey('name_register'),
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: "Nama Lengkap",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: TextField(
-                      key: const ValueKey('username_register'),
-                      controller: usernameController,
-                      decoration: const InputDecoration(
-                        labelText: "Username",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: TextField(
-                      key: const ValueKey('phone_register'),
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: "Nomor Telepon",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.phone),
-                      ),
-                    ),
-                  ),
-                  TextField(
-                    key: const ValueKey('password_register'),
-                    controller: passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: "Password",
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.lock),
-                    ),
-                  ),
-                ],
-              ),
+        child: isLoginSelected ? buildLoginForm() : buildRegisterForm(),
       ),
     );
   }
