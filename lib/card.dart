@@ -439,10 +439,32 @@ class _MyCardState extends State<MyCard> {
                     );
                   },
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: showAddContactModal,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: "refreshBtn",
+            onPressed: isLoading ? null : fetchData, // disable saat loading
+            backgroundColor: Colors.blue,
+            child: isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.refresh),
+          ),
+          const SizedBox(width: 12),
+          FloatingActionButton(
+            heroTag: "addBtn",
+            onPressed: showAddContactModal,
+            child: const Icon(Icons.add),
+          ),
+        ],
+      )
     );
   }
 }
