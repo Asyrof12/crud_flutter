@@ -397,7 +397,80 @@ class _MyCardState extends State<MyCard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Daftar Kontak")),
+      appBar: AppBar(
+        leading: Builder(
+          builder: (context) {
+            return IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () async {
+                final RenderBox button =
+                    context.findRenderObject() as RenderBox;
+                final RenderBox overlay =
+                    Overlay.of(context).context.findRenderObject() as RenderBox;
+
+                final RelativeRect position = RelativeRect.fromRect(
+                  Rect.fromPoints(
+                    button.localToGlobal(Offset.zero, ancestor: overlay),
+                    button.localToGlobal(button.size.bottomRight(Offset.zero),
+                        ancestor: overlay),
+                  ),
+                  Offset.zero & overlay.size,
+                );
+
+                final selected = await showMenu<String>(
+                  context: context,
+                  position: position,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  items: [
+                    const PopupMenuItem(
+                      value: 'contacts',
+                      child: Row(
+                        children: [
+                          Icon(Icons.contacts, size: 20),
+                          SizedBox(width: 8),
+                          Text('Daftar Kontak'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'about',
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 20),
+                          SizedBox(width: 8),
+                          Text('About Aplikasi'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'settings',
+                      child: Row(
+                        children: [
+                          Icon(Icons.settings, size: 20),
+                          SizedBox(width: 8),
+                          Text('Setting'),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+                if (selected != null) {
+                  if (selected == 'contacts') {
+                    print('Buka Daftar Kontak');
+                  } else if (selected == 'about') {
+                    print('Buka Tentang Aplikasi');
+                  } else if (selected == 'settings') {
+                    print('Buka Setting');
+                  }
+                }
+              },
+            );
+          },
+        ),
+        title: const Text("Daftar Kontak"),
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : errorMessage != null
