@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:card/card.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:card/auth_screens/screens.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -65,6 +66,16 @@ class AboutPage extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const PopupMenuItem(
+                      value: 'logout',
+                      child: Row(
+                        children: [
+                          Icon(Icons.logout, size: 20),
+                          SizedBox(width: 8),
+                          Text('Logout'),
+                        ],
+                      ),
+                    ),
                   ],
                 );
 
@@ -81,6 +92,16 @@ class AboutPage extends StatelessWidget {
                     // sudah di halaman ini
                   } else if (selected == 'settings') {
                     print('Buka Setting');
+                  } else if (selected == 'logout') {
+                    // Contoh logout: kembali ke LoginScreen
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginApp(),
+                      ),
+                    );
+                    // Kalau pakai token/session, hapus di sini
+                    // Contoh: await SharedPreferences.getInstance().then((prefs) => prefs.clear());
                   }
                 }
               },
@@ -98,7 +119,7 @@ class AboutPage extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.info, color: Colors.blue),
               title: const Text('Nama Aplikasi'),
-              subtitle: const Text('Aplikasi Kontak Sederhana'),
+              subtitle: const Text('Aplikasi Kontak'),
             ),
           ),
           Card(
@@ -116,7 +137,7 @@ class AboutPage extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.person, color: Colors.orange),
               title: const Text('Dikembangkan oleh'),
-              subtitle: const Text('Nama Developer'),
+              subtitle: const Text('SMKN 1 Pasuruan'),
             ),
           ),
           Card(
@@ -125,13 +146,13 @@ class AboutPage extends StatelessWidget {
             child: ListTile(
               leading: const Icon(Icons.email, color: Colors.red),
               title: const Text('Kontak'),
-              subtitle: const Text('email@example.com'),
+              subtitle: const Text('skensa@gmail.com'),
             ),
           ),
           const SizedBox(height: 20),
           const Center(
             child: Text(
-              '© 2025 Nama Developer. All rights reserved.',
+              '© 2025 Magang DMC. All rights reserved.',
               style: TextStyle(color: Colors.grey),
             ),
           ),
