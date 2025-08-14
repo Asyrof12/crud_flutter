@@ -108,7 +108,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final data = _safeJson(res.body);
 
     // Jika login berhasil, lewati exception
-    if (!(data['success'] == true || (data['message']?.toLowerCase().contains('berhasil') ?? false))) {
+    if (!(data['success'] == true ||
+        (data['message']?.toLowerCase().contains('berhasil') ?? false))) {
       throw Exception(data['message'] ?? 'Kredensial salah');
     }
 
@@ -138,7 +139,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     }
 
     final data = _safeJson(res.body);
-    if (!(data['success'] == true || (data['message']?.toLowerCase().contains('berhasil') ?? false))) {
+    if (!(data['success'] == true ||
+        (data['message']?.toLowerCase().contains('berhasil') ?? false))) {
       throw Exception(data['message'] ?? 'Registrasi gagal');
     }
 
@@ -190,7 +192,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => MyCard(apiUrl: dotenv.env['API_URL'] ?? ''),
+            builder: (context) => MyCard(
+              apiUrl: dotenv.env['API_URL'] ?? '',
+              username: usernameController.text.trim(), // kirim username
+            ),
           ),
         );
       } else {

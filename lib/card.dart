@@ -6,7 +6,13 @@ import 'settings/hamburger.dart';
 
 class MyCard extends StatefulWidget {
   final String apiUrl;
-  const MyCard({super.key, required this.apiUrl});
+  final String username;
+
+  const MyCard({
+    super.key,
+    required this.apiUrl,
+    required this.username,
+  });
 
   @override
   State<MyCard> createState() => _MyCardState();
@@ -411,50 +417,84 @@ class _MyCardState extends State<MyCard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-        leading: const CustomHamburger(),
-        title: const Text("Daftar Kontak"),
-      ),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(56), // standar tinggi AppBar
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            centerTitle: false, // biar tetep rata kiri
+            titleSpacing: 0, // rapat ke hamburger
+            title: Row(
+              children: [
+                CustomHamburger(username: widget.username),
+                const SizedBox(width: 10),
+                Text(
+                  "Selamat datang, ${widget.username}",
+                  style: const TextStyle(
+                    fontSize: 18, // pas, nggak terlalu besar
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         body: isLoading
             ? const Center(child: CircularProgressIndicator())
             : errorMessage != null
                 ? Center(child: Text(errorMessage!))
-                : ListView.builder(
-                    itemCount: data.length,
-                    itemBuilder: (context, index) {
-                      final item = data[index];
-                      return Card(
-                        margin: const EdgeInsets.all(8),
-                        child: ListTile(
-                          title: Text(item['name'] ?? 'Tanpa Nama'),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(item['phone'] ?? 'Tidak ada nomor'),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Created: ${formatDate(item['created_at'])}",
-                                style: const TextStyle(
-                                    fontSize: 12, color: Colors.blue),
-                              ),
-                            ],
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () => showEditContactModal(item),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () => showDeleteConfirmDialog(item),
-                              ),
-                            ],
+                : ListView(
+                    children: [
+                      // Header "Daftar Kontak"
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text(
+                          "Daftar Kontak",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      );
-                    },
+                      ),
+
+                      // List kontak
+                      ...data.map((item) {
+                        return Card(
+                          margin: const EdgeInsets.all(8),
+                          child: ListTile(
+                            title: Text(item['name'] ?? 'Tanpa Nama'),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item['phone'] ?? 'Tidak ada nomor'),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Created: ${formatDate(item['created_at'])}",
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit),
+                                  onPressed: () => showEditContactModal(item),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete),
+                                  onPressed: () =>
+                                      showDeleteConfirmDialog(item),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
                   ),
         floatingActionButton: Padding(
           padding: const EdgeInsets.only(bottom: 33), // geser ke atas 30px

@@ -4,9 +4,12 @@ import 'package:card/settings/about.dart';
 import 'package:card/card.dart';
 import 'package:card/auth_screens/screens.dart';
 
-
 class CustomHamburger extends StatelessWidget {
-  const CustomHamburger({super.key});
+  final String? username;
+  const CustomHamburger({
+    Key? key,
+    this.username,
+    }): super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -15,8 +18,7 @@ class CustomHamburger extends StatelessWidget {
         return IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () async {
-            final RenderBox button =
-                context.findRenderObject() as RenderBox;
+            final RenderBox button = context.findRenderObject() as RenderBox;
             final RenderBox overlay =
                 Overlay.of(context).context.findRenderObject() as RenderBox;
 
@@ -83,8 +85,11 @@ class CustomHamburger extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      MyCard(apiUrl: dotenv.env['API_URL'] ?? ''),
+                  builder: (context) => MyCard(
+                    // username: username ?? '',
+                    username: username ?? '',
+                    apiUrl: dotenv.env['API_URL'] ?? '',
+                  ),
                 ),
               );
             } else if (selected == 'about') {
