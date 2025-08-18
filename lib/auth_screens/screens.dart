@@ -187,7 +187,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
         // ✅ simpan username ke SharedPreferences
         final prefs = await SharedPreferences.getInstance();
-        
+
         await prefs.setString('username', data['username']);
         await prefs.setInt('id', data['id']);
         await prefs.setString('phone', data['phone']);
@@ -201,7 +201,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           MaterialPageRoute(
             builder: (context) => MyCard(
               apiUrl: dotenv.env['API_URL'] ?? '',
-              username: usernameController.text.trim(), // kirim username
+              username: data['username'], // ambil dari response login
+               // ambil phone dari response, fallback '' kalau null
             ),
           ),
         );

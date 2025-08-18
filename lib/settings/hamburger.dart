@@ -7,9 +7,11 @@ import 'package:card/auth_screens/screens.dart';
 
 class CustomHamburger extends StatelessWidget {
   final String? username;
+  final String? phone;
   const CustomHamburger({
     Key? key,
     this.username,
+    this.phone,
     }): super(key: key);
 
   @override
@@ -104,7 +106,11 @@ class CustomHamburger extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const MySetting(),
+                  builder: (context) => MySetting(
+                    // username: username ?? '',
+                    username: username ?? '',
+                    phone: phone ?? '',
+                  ),
                 ),
               );
             } else if (selected == 'logout') {
