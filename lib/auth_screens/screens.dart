@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:card/card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -179,14 +180,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
     try {
       if (isLoginSelected) {
-        final data = await _login(
-          usernameController.text.trim(),
-          passwordController.text.trim(),
-        );
-        print('Login response: $data');
+        // ✅ simpan username ke SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('username', usernameController.text.trim());
 
-        _showSnack(data['message'] ?? 'Login berhasil');
-        passwordController.clear();
+        // (opsional) kalau API juga ngasih token, bisa disimpan
+        // await prefs.setString('token', data['token']);
 
         if (!mounted) return;
         Navigator.pushReplacement(

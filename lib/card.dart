@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'settings/hamburger.dart';
 
 class MyCard extends StatefulWidget {
@@ -31,7 +32,17 @@ class _MyCardState extends State<MyCard> {
   @override
   void initState() {
     super.initState();
+    _loadUser();
     fetchData();
+  }
+
+  String? savedUsername;
+
+  Future<void> _loadUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      savedUsername = prefs.getString('username') ?? 'User';
+    });
   }
 
   Future<void> fetchData() async {
@@ -425,12 +436,12 @@ class _MyCardState extends State<MyCard> {
             titleSpacing: 0, // rapat ke hamburger
             title: Row(
               children: [
-                CustomHamburger(username: widget.username),
+                CustomHamburger(username: savedUsername ?? widget.username),
                 const SizedBox(width: 10),
                 Text(
-                  "Selamat datang, ${widget.username}",
+                  "Selamat datang, ${savedUsername ?? widget.username}",
                   style: const TextStyle(
-                    fontSize: 18, // pas, nggak terlalu besar
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
