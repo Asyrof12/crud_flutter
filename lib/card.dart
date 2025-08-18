@@ -37,11 +37,15 @@ class _MyCardState extends State<MyCard> {
   }
 
   String? savedUsername;
+  int? savedId;
+  String? savedPhone;
 
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       savedUsername = prefs.getString('username') ?? 'User';
+      savedId = prefs.getInt('id');
+      savedPhone = prefs.getString('phone') ?? '';
     });
   }
 
@@ -429,21 +433,37 @@ class _MyCardState extends State<MyCard> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(56), // standar tinggi AppBar
+          preferredSize: const Size.fromHeight(56),
           child: AppBar(
             automaticallyImplyLeading: false,
-            centerTitle: false, // biar tetep rata kiri
-            titleSpacing: 0, // rapat ke hamburger
+            centerTitle: false,
+            titleSpacing: 0,
             title: Row(
               children: [
                 CustomHamburger(username: savedUsername ?? widget.username),
                 const SizedBox(width: 10),
-                Text(
-                  "Selamat datang, ${savedUsername ?? widget.username}",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                    children: [
+                      TextSpan(
+                        text:
+                            "Selamat datang, ${savedUsername ?? widget.username}",
+                      ),
+                      if (savedPhone != null)
+                        TextSpan(
+                          text: " ${savedPhone}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.grey,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
