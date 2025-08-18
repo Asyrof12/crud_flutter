@@ -1,3 +1,4 @@
+import 'package:card/settings/setting_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:card/settings/about.dart';
@@ -100,7 +101,12 @@ class CustomHamburger extends StatelessWidget {
                 ),
               );
             } else if (selected == 'settings') {
-              print('Buka Setting');
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MySetting(),
+                ),
+              );
             } else if (selected == 'logout') {
               Navigator.pushReplacement(
                 context,
