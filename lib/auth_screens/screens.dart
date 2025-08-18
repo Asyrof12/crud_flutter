@@ -180,9 +180,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
     try {
       if (isLoginSelected) {
+        final data = await _login(
+          usernameController.text.trim(),
+          passwordController.text.trim(),
+        );
+
         // ✅ simpan username ke SharedPreferences
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('username', usernameController.text.trim());
+        
+        await prefs.setString('username', data['username']);
+        await prefs.setInt('id', data['id']);
+        await prefs.setString('phone', data['phone']);
 
         // (opsional) kalau API juga ngasih token, bisa disimpan
         // await prefs.setString('token', data['token']);
