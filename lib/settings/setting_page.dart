@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:card/settings/hamburger.dart';
 import 'package:card/menu_setting/keamanan.dart';
 
-class MySetting extends StatelessWidget {
-  final String username;
-  final String phone;
+class MySetting extends StatefulWidget {
+  const MySetting({super.key});
 
-  const MySetting({
-    super.key,
-    required this.username,
-    required this.phone,
-  });
+  @override
+  State<MySetting> createState() => _MySettingState();
+}
+
+class _MySettingState extends State<MySetting> {
+  String username = "";
+  String phone = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      username = prefs.getString('username') ?? "Guest";
+      phone = prefs.getString('phone') ?? "-";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,11 +78,10 @@ class MySetting extends StatelessWidget {
           Card(
             elevation: 4,
             margin: const EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              leading: const Icon(Icons.notifications, color: Colors.green),
-              title: const Text('Notifikasi'),
-              subtitle: const Text('Pengaturan notifikasi'),
-              onTap: () {},
+            child: const ListTile(
+              leading: Icon(Icons.notifications, color: Colors.green),
+              title: Text('Notifikasi'),
+              subtitle: Text('Pengaturan notifikasi'),
             ),
           ),
 
@@ -139,10 +154,12 @@ class MySetting extends StatelessWidget {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                      content: Text(
-                                          selectedLanguage == 'English'
-                                              ? 'Language changed to English'
-                                              : 'Bahasa diubah ke Indonesia')),
+                                    content: Text(
+                                      selectedLanguage == 'English'
+                                          ? 'Language changed to English'
+                                          : 'Bahasa diubah ke Indonesia',
+                                    ),
+                                  ),
                                 );
                               },
                               child: const Text('Simpan'),
@@ -161,11 +178,10 @@ class MySetting extends StatelessWidget {
           Card(
             elevation: 4,
             margin: const EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              leading: const Icon(Icons.help, color: Colors.red),
-              title: const Text('Bantuan'),
-              subtitle: const Text('Dapatkan bantuan dan dukungan'),
-              onTap: () {},
+            child: const ListTile(
+              leading: Icon(Icons.help, color: Colors.red),
+              title: Text('Bantuan'),
+              subtitle: Text('Dapatkan bantuan dan dukungan'),
             ),
           ),
         ],

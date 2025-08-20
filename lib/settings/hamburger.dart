@@ -8,11 +8,12 @@ import 'package:card/auth_screens/screens.dart';
 class CustomHamburger extends StatelessWidget {
   final String? username;
   final String? phone;
+
   const CustomHamburger({
     Key? key,
     this.username,
     this.phone,
-    }): super(key: key);
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +90,6 @@ class CustomHamburger extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => MyCard(
-                    // username: username ?? '',
                     username: username ?? '',
                     apiUrl: dotenv.env['API_URL'] ?? '',
                   ),
@@ -103,14 +103,10 @@ class CustomHamburger extends StatelessWidget {
                 ),
               );
             } else if (selected == 'settings') {
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => MySetting(
-                    // username: username ?? '',
-                    username: username ?? '',
-                    phone: phone ?? '',
-                  ),
+                  builder: (context) => const MySetting(),
                 ),
               );
             } else if (selected == 'logout') {
