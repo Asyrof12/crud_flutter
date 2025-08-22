@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:card/settings/hamburger.dart';
-import 'package:card/menu_setting/keamanan.dart';
+import 'package:provider/provider.dart';
+import '../providers/AppLanguage.dart';
+import '../menu_setting/keamanan.dart';
+import 'hamburger.dart';
 
 class MySetting extends StatefulWidget {
   const MySetting({super.key});
@@ -30,10 +32,12 @@ class _MySettingState extends State<MySetting> {
 
   @override
   Widget build(BuildContext context) {
+    final appLang = Provider.of<AppLanguage>(context);
+
     return Scaffold(
       appBar: AppBar(
         leading: const CustomHamburger(),
-        title: const Text("Setting"),
+        title: Text(appLang.getText('setting')),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -44,14 +48,14 @@ class _MySettingState extends State<MySetting> {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.person, color: Colors.blue),
-              title: const Text('Akun'),
-              subtitle: const Text('Info akun Anda'),
+              title: Text(appLang.getText('account')),
+              subtitle: Text(appLang.getText('account_info')),
               onTap: () {
                 showDialog(
                   context: context,
                   builder: (context) {
                     return AlertDialog(
-                      title: const Text('Info Akun'),
+                      title: Text(appLang.getText('account')),
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,7 +68,7 @@ class _MySettingState extends State<MySetting> {
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Tutup'),
+                          child: Text(appLang.getText('cancel')),
                         ),
                       ],
                     );
@@ -78,10 +82,10 @@ class _MySettingState extends State<MySetting> {
           Card(
             elevation: 4,
             margin: const EdgeInsets.only(bottom: 16),
-            child: const ListTile(
-              leading: Icon(Icons.notifications, color: Colors.green),
-              title: Text('Notifikasi'),
-              subtitle: Text('Pengaturan notifikasi'),
+            child: ListTile(
+              leading: const Icon(Icons.notifications, color: Colors.green),
+              title: Text(appLang.getText('notification')),
+              subtitle: Text(appLang.getText('notification')),
             ),
           ),
 
@@ -91,8 +95,8 @@ class _MySettingState extends State<MySetting> {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.security, color: Colors.orange),
-              title: const Text('Keamanan'),
-              subtitle: const Text('Pengaturan keamanan aplikasi'),
+              title: Text(appLang.getText('security')),
+              subtitle: Text(appLang.getText('security')),
               onTap: () {
                 Navigator.push(
                   context,
@@ -108,23 +112,24 @@ class _MySettingState extends State<MySetting> {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.language, color: Colors.purple),
-              title: const Text('Bahasa'),
-              subtitle: const Text('Pengaturan bahasa aplikasi'),
+              title: Text(appLang.getText('language')),
+              subtitle: Text(appLang.getText('language')),
               onTap: () {
                 showDialog(
                   context: context,
                   builder: (context) {
-                    String selectedLanguage = 'English';
+                    String selectedLanguage = appLang.currentLang;
+
                     return StatefulBuilder(
                       builder: (context, setState) {
                         return AlertDialog(
-                          title: const Text('Pilih Bahasa'),
+                          title: Text(appLang.getText('choose_language')),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               RadioListTile(
                                 title: const Text('Indonesia'),
-                                value: 'Indonesia',
+                                value: 'id',
                                 groupValue: selectedLanguage,
                                 onChanged: (value) {
                                   setState(() {
@@ -134,7 +139,7 @@ class _MySettingState extends State<MySetting> {
                               ),
                               RadioListTile(
                                 title: const Text('English'),
-                                value: 'English',
+                                value: 'en',
                                 groupValue: selectedLanguage,
                                 onChanged: (value) {
                                   setState(() {
@@ -147,22 +152,20 @@ class _MySettingState extends State<MySetting> {
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Batal'),
+                              child: Text(appLang.getText('cancel')),
                             ),
                             ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
+                                await appLang.changeLang(selectedLanguage);
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      selectedLanguage == 'English'
-                                          ? 'Language changed to English'
-                                          : 'Bahasa diubah ke Indonesia',
-                                    ),
+                                        appLang.getText('language_changed')),
                                   ),
                                 );
                               },
-                              child: const Text('Simpan'),
+                              child: Text(appLang.getText('save')),
                             ),
                           ],
                         );
@@ -178,10 +181,10 @@ class _MySettingState extends State<MySetting> {
           Card(
             elevation: 4,
             margin: const EdgeInsets.only(bottom: 16),
-            child: const ListTile(
-              leading: Icon(Icons.help, color: Colors.red),
-              title: Text('Bantuan'),
-              subtitle: Text('Dapatkan bantuan dan dukungan'),
+            child: ListTile(
+              leading: const Icon(Icons.help, color: Colors.red),
+              title: Text(appLang.getText('help')),
+              subtitle: Text(appLang.getText('help')),
             ),
           ),
         ],
