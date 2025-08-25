@@ -36,6 +36,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   bool isLoginSelected = true;
   bool isLoading = false;
 
+  bool _obscureLoginPassword = true;
+  bool _obscureRegisterPassword = true;
+
   final _formKeyLogin = GlobalKey<FormState>();
   final _formKeyRegister = GlobalKey<FormState>();
 
@@ -346,11 +349,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           TextFormField(
             key: const ValueKey('password_login'),
             controller: passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(
+            obscureText: _obscureLoginPassword,
+            decoration: InputDecoration(
               labelText: "Password",
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.lock),
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.lock),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureLoginPassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscureLoginPassword = !_obscureLoginPassword; // toggle
+                  });
+                },
+              ),
             ),
             validator: (v) => (v == null || v.length < 6)
                 ? 'Password minimal 6 karakter'
@@ -416,11 +431,24 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           TextFormField(
             key: const ValueKey('password_register'),
             controller: passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(
+            obscureText: _obscureRegisterPassword,
+            decoration: InputDecoration(
               labelText: "Password",
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.lock),
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.lock),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureRegisterPassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscureRegisterPassword =
+                        !_obscureRegisterPassword; // toggle
+                  });
+                },
+              ),
             ),
             validator: (v) => (v == null || v.length < 6)
                 ? 'Password minimal 6 karakter'
