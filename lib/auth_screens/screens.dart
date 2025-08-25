@@ -202,7 +202,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             builder: (context) => MyCard(
               apiUrl: dotenv.env['API_URL'] ?? '',
               username: data['username'], // ambil dari response login
-               // ambil phone dari response, fallback '' kalau null
+              // ambil phone dari response, fallback '' kalau null
             ),
           ),
         );
@@ -270,12 +270,24 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   style: TextButton.styleFrom(
                     foregroundColor:
                         isLoginSelected ? Colors.white : inactiveTextColor,
+                    backgroundColor:
+                        isLoginSelected ? Colors.black : Colors.grey[300],
                     textStyle: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
+                    padding: EdgeInsets.zero, // 🚀 hilangkan padding default
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Sign In', overflow: TextOverflow.ellipsis),
+                  child: const Center(
+                    // pastikan teks selalu di tengah
+                    child: Text(
+                      'Sign In',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               ),
               Expanded(
@@ -284,12 +296,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   style: TextButton.styleFrom(
                     foregroundColor:
                         !isLoginSelected ? Colors.white : inactiveTextColor,
+                    backgroundColor:
+                        !isLoginSelected ? Colors.black : Colors.grey[300],
                     textStyle: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
+                    padding: EdgeInsets.zero, // 🚀 hilangkan padding default
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Sign Up', overflow: TextOverflow.ellipsis),
+                  child: const Center(
+                    child: Text(
+                      'Sign Up',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -306,7 +329,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.only(bottom: 8),
             child: TextFormField(
               key: const ValueKey('username_login'),
               controller: usernameController,
@@ -345,7 +368,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.only(bottom: 8),
             child: TextFormField(
               key: const ValueKey('name_register'),
               controller: nameController,
@@ -470,8 +493,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   const SizedBox(height: 24),
                   buildToggleButtons(),
                   const SizedBox(height: 24),
-                  buildInputFields(),
-                  const SizedBox(height: 24),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOut,
+                    child: buildInputFields(),
+                  ),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     height: 50,
