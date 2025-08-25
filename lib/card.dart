@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'settings/hamburger.dart';
+import 'package:provider/provider.dart';
+import '../providers/AppLanguage.dart';
 
 class MyCard extends StatefulWidget {
   final String apiUrl;
@@ -50,6 +52,7 @@ class _MyCardState extends State<MyCard> {
   }
 
   Future<void> fetchData() async {
+    final appLang = Provider.of<AppLanguage>(context, listen: false);
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -74,19 +77,20 @@ class _MyCardState extends State<MyCard> {
           });
         } else {
           setState(() {
-            errorMessage = "Data tidak dalam format list";
+            errorMessage = appLang.getText("invalid_data_format");
             isLoading = false;
           });
         }
       } else {
         setState(() {
-          errorMessage = "Gagal load data (${response.statusCode})";
+          errorMessage =
+              "${appLang.getText("failed_load")} (${response.statusCode})";
           isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        errorMessage = "Error: $e";
+        errorMessage = "${appLang.getText("error_msg")}: $e";
         isLoading = false;
       });
     }
@@ -103,12 +107,13 @@ class _MyCardState extends State<MyCard> {
   }
 
   Future<void> addPhone() async {
+    final appLang = Provider.of<AppLanguage>(context, listen: false);
     final name = nameController.text.trim();
     final phone = phoneController.text.trim();
 
     if (name.isEmpty || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama dan nomor harus diisi')),
+        SnackBar(content: Text(appLang.getText("name_phone_required"))),
       );
       return;
     }
@@ -127,7 +132,7 @@ class _MyCardState extends State<MyCard> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Berhasil tambah kontak')),
+          SnackBar(content: Text(appLang.getText("contact_added"))),
         );
         nameController.clear();
         phoneController.clear();
@@ -136,12 +141,13 @@ class _MyCardState extends State<MyCard> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Gagal tambah kontak (${response.statusCode})')),
+              content: Text(
+                  "${appLang.getText("failed_add")} (${response.statusCode})")),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text("${appLang.getText("error_msg")}: $e")),
       );
     } finally {
       setState(() {
@@ -151,13 +157,13 @@ class _MyCardState extends State<MyCard> {
   }
 
   Future<void> editPhone(String id) async {
-    final idController = TextEditingController(text: id);
+    final appLang = Provider.of<AppLanguage>(context, listen: false);
     final name = nameController.text.trim();
     final phone = phoneController.text.trim();
 
     if (name.isEmpty || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama dan nomor harus diisi')),
+        SnackBar(content: Text(appLang.getText("name_phone_required"))),
       );
       return;
     }
@@ -176,17 +182,19 @@ class _MyCardState extends State<MyCard> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Berhasil edit kontak')),
+          SnackBar(content: Text(appLang.getText("contact_updated"))),
         );
         fetchData();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal edit (${response.statusCode})')),
+          SnackBar(
+              content: Text(
+                  "${appLang.getText("failed_edit")} (${response.statusCode})")),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text("${appLang.getText("error_msg")}: $e")),
       );
     } finally {
       setState(() {
@@ -196,6 +204,7 @@ class _MyCardState extends State<MyCard> {
   }
 
   Future<void> deletePhone(int id) async {
+    final appLang = Provider.of<AppLanguage>(context, listen: false);
     try {
       final response = await http.post(
         Uri.parse("${widget.apiUrl}/delete"),
@@ -205,8 +214,8 @@ class _MyCardState extends State<MyCard> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Data berhasil dihapus'),
+          SnackBar(
+            content: Text(appLang.getText("contact_deleted")),
             backgroundColor: Colors.red,
           ),
         );
@@ -214,19 +223,19 @@ class _MyCardState extends State<MyCard> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal menghapus (${response.statusCode})'),
-            backgroundColor: const Color.fromARGB(255, 71, 71, 71),
-          ),
+              content: Text(
+                  "${appLang.getText("failed_delete")} (${response.statusCode})")),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text("${appLang.getText("error_msg")}: $e")),
       );
     }
   }
 
   void showAddContactModal() {
+    final appLang = Provider.of<AppLanguage>(context, listen: false);
     final localNameController = TextEditingController();
     final localPhoneController = TextEditingController();
     final scaffoldContext = context; // context Scaffold utama
@@ -240,19 +249,20 @@ class _MyCardState extends State<MyCard> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Tambah Kontak'),
+              title: Text(appLang.getText("add_contact")),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: localNameController,
-                      decoration: const InputDecoration(labelText: 'Nama'),
+                      decoration:
+                          InputDecoration(labelText: appLang.getText("name")),
                     ),
                     TextField(
                       controller: localPhoneController,
                       decoration:
-                          const InputDecoration(labelText: 'Nomor Telepon'),
+                          InputDecoration(labelText: appLang.getText("phone")),
                       keyboardType: TextInputType.phone,
                     ),
                   ],
@@ -262,7 +272,7 @@ class _MyCardState extends State<MyCard> {
                 TextButton(
                   onPressed:
                       isAdding ? null : () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Batal'),
+                  child: Text(appLang.getText("cancel")),
                 ),
                 ElevatedButton(
                   onPressed: isAdding
@@ -273,8 +283,9 @@ class _MyCardState extends State<MyCard> {
 
                           if (name.isEmpty || phone.isEmpty) {
                             ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Nama dan nomor harus diisi')),
+                              SnackBar(
+                                  content: Text(
+                                      appLang.getText("name_phone_required"))),
                             );
                             return;
                           }
@@ -293,8 +304,9 @@ class _MyCardState extends State<MyCard> {
                                 response.statusCode == 201) {
                               ScaffoldMessenger.of(scaffoldContext)
                                   .showSnackBar(
-                                const SnackBar(
-                                    content: Text('Berhasil tambah kontak')),
+                                SnackBar(
+                                    content:
+                                        Text(appLang.getText("contact_added"))),
                               );
                               Navigator.of(dialogContext).pop();
                               fetchData();
@@ -303,12 +315,14 @@ class _MyCardState extends State<MyCard> {
                                   .showSnackBar(
                                 SnackBar(
                                     content: Text(
-                                        'Gagal tambah kontak (${response.statusCode})')),
+                                        "${appLang.getText("failed_add")} (${response.statusCode})")),
                               );
                             }
                           } catch (e) {
                             ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                              SnackBar(content: Text('Error: $e')),
+                              SnackBar(
+                                  content: Text(
+                                      "${appLang.getText("error_msg")}: $e")),
                             );
                           } finally {
                             setState(() => isAdding = false);
@@ -321,7 +335,7 @@ class _MyCardState extends State<MyCard> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('Tambah'),
+                      : Text(appLang.getText("add")),
                 ),
               ],
             );
@@ -332,6 +346,7 @@ class _MyCardState extends State<MyCard> {
   }
 
   void showEditContactModal(Map contact) {
+    final appLang = Provider.of<AppLanguage>(context, listen: false);
     nameController.text = contact['name'] ?? '';
     phoneController.text = contact['phone'] ?? '';
     final idController =
@@ -340,31 +355,24 @@ class _MyCardState extends State<MyCard> {
     final rootContext = context; // context Scaffold utama
 
     showDialog(
-      context: rootContext, // pakai rootContext, bukan context biasa
+      context: rootContext,
       barrierDismissible: false,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Edit Kontak'),
-              Text(
-                idController.text,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-            ],
-          ),
+          title: Text(appLang.getText("edit_contact")),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Nama'),
+                  decoration:
+                      InputDecoration(labelText: appLang.getText("name")),
                 ),
                 TextField(
                   controller: phoneController,
-                  decoration: const InputDecoration(labelText: 'Nomor Telepon'),
+                  decoration:
+                      InputDecoration(labelText: appLang.getText("phone")),
                   keyboardType: TextInputType.phone,
                 ),
               ],
@@ -379,7 +387,7 @@ class _MyCardState extends State<MyCard> {
                       nameController.clear();
                       phoneController.clear();
                     },
-              child: const Text('Batal'),
+              child: Text(appLang.getText("cancel")),
             ),
             ElevatedButton(
               onPressed: isAddingOrEditing
@@ -388,7 +396,8 @@ class _MyCardState extends State<MyCard> {
                       Navigator.of(dialogContext).pop(); // tutup dialog dulu
                       await editPhone(idController.text);
                       ScaffoldMessenger.of(rootContext).showSnackBar(
-                        const SnackBar(content: Text('Kontak berhasil diubah')),
+                        SnackBar(
+                            content: Text(appLang.getText("contact_updated"))),
                       );
                     },
               child: isAddingOrEditing
@@ -398,7 +407,7 @@ class _MyCardState extends State<MyCard> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Simpan'),
+                  : Text(appLang.getText("save")),
             ),
           ],
         );
@@ -407,22 +416,24 @@ class _MyCardState extends State<MyCard> {
   }
 
   void showDeleteConfirmDialog(Map contact) {
+    final appLang = Provider.of<AppLanguage>(context, listen: false);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi Hapus'),
-        content: Text('Hapus kontak "${contact['name']}"?'),
+        title: Text(appLang.getText("confirm_delete")),
+        content: Text(
+            '${appLang.getText("delete_contact_q")} "${contact['name']}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Batal'),
+            child: Text(appLang.getText("cancel")),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.of(context).pop();
               await deletePhone(int.parse(contact['id'].toString()));
             },
-            child: const Text('Hapus'),
+            child: Text(appLang.getText("delete")),
           ),
         ],
       ),
@@ -431,6 +442,8 @@ class _MyCardState extends State<MyCard> {
 
   @override
   Widget build(BuildContext context) {
+    final appLang = Provider.of<AppLanguage>(context);
+
     return Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(56),
@@ -452,11 +465,11 @@ class _MyCardState extends State<MyCard> {
                     children: [
                       TextSpan(
                         text:
-                            "Selamat datang, ${savedUsername ?? widget.username}",
+                            "${appLang.getText("welcome")}, ${savedUsername ?? widget.username}",
                       ),
                       if (savedPhone != null)
                         TextSpan(
-                          text: " ${savedPhone}",
+                          text: " $savedPhone",
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.normal,
@@ -476,31 +489,30 @@ class _MyCardState extends State<MyCard> {
                 ? Center(child: Text(errorMessage!))
                 : ListView(
                     children: [
-                      // Header "Daftar Kontak"
-                      const Padding(
-                        padding: EdgeInsets.all(16.0),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
                         child: Text(
-                          "Daftar Kontak",
-                          style: TextStyle(
+                          appLang.getText("contact_list"),
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-
-                      // List kontak
                       ...data.map((item) {
                         return Card(
                           margin: const EdgeInsets.all(8),
                           child: ListTile(
-                            title: Text(item['name'] ?? 'Tanpa Nama'),
+                            title: Text(
+                                item['name'] ?? appLang.getText("no_name")),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(item['phone'] ?? 'Tidak ada nomor'),
+                                Text(item['phone'] ??
+                                    appLang.getText("no_phone_number")),
                                 const SizedBox(height: 4),
                                 Text(
-                                  "Created: ${formatDate(item['created_at'])}",
+                                  "${appLang.getText("created_at")}: ${formatDate(item['created_at'])}",
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.blue,
