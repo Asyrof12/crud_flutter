@@ -34,20 +34,33 @@ class Lang {
       'kontak': 'Contact',
 
       // Keamanan Page
-      'change_password': 'Change Password',
-      'old_password': 'Old Password',
-      'new_password': 'New Password',
-      'confirm_password': 'Confirm Password',
-      'save_password': 'Save Password',
-      'password_updated': 'Password updated successfully',
+      "security_settings": "Security Settings",
+      "change_password": "Change Password",
+      "change_password_sub": "Change your account password",
+      "old_password": "Old Password",
+      "new_password": "New Password",
+      "confirm_new_password": "Confirm New Password",
+      "change": "Change",
+      "password_not_match": "New password does not match!",
+      "password_changed": "Password changed successfully",
+      "biometric_auth": "Biometric Authentication",
+      "biometric_auth_sub": "Enable biometric authentication",
+      "biometric_auth_confirm":
+          "Enable biometric authentication on your account?",
+      "biometric_enabled": "Biometric enabled",
+      "yes": "Yes",
+      "account_security": "Account Security",
+      "account_security_sub": "Manage your account security",
+      "privacy": "Privacy",
+      "privacy_sub": "Manage app privacy settings",
 
       // Hamburger Menu
       'menu_contacts': 'Contacts',
       'menu_about': 'About App',
       'menu_settings': 'Settings',
       'menu_logout': 'Logout',
-
     },
+
     'id': {
       // General
       'choose_language': 'Pilih Bahasa',
@@ -82,12 +95,25 @@ class Lang {
       'kontak': 'Kontak',
 
       // Keamanan Page
-      'change_password': 'Ubah Kata Sandi',
-      'old_password': 'Kata Sandi Lama',
-      'new_password': 'Kata Sandi Baru',
-      'confirm_password': 'Konfirmasi Kata Sandi',
-      'save_password': 'Simpan Kata Sandi',
-      'password_updated': 'Kata sandi berhasil diperbarui',
+      "security_settings": "Pengaturan Keamanan",
+      "change_password": "Ubah Kata Sandi",
+      "change_password_sub": "Ganti kata sandi akun Anda",
+      "old_password": "Password Lama",
+      "new_password": "Password Baru",
+      "confirm_new_password": "Konfirmasi Password Baru",
+      "change": "Ganti",
+      "password_not_match": "Password baru tidak cocok!",
+      "password_changed": "Password berhasil diganti",
+      "biometric_auth": "Autentikasi Biometrik",
+      "biometric_auth_sub": "Aktifkan autentikasi biometrik",
+      "biometric_auth_confirm":
+          "Aktifkan autentikasi biometrik pada akun Anda?",
+      "biometric_enabled": "Biometrik diaktifkan",
+      "yes": "Ya",
+      "account_security": "Keamanan Akun",
+      "account_security_sub": "Pengaturan keamanan akun Anda",
+      "privacy": "Privasi",
+      "privacy_sub": "Pengaturan privasi aplikasi",
 
       // Hamburger Menu
       'menu_contacts': 'Daftar Kontak',

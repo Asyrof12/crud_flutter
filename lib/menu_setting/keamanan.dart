@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:card/providers/AppLanguage.dart';
 
 class KeamananPage extends StatelessWidget {
   const KeamananPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final appLang = Provider.of<AppLanguage>(context);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text("Pengaturan Keamanan"),
+        title: Text(appLang.getText("security_settings")),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -21,10 +25,9 @@ class KeamananPage extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.lock, color: Colors.blue),
-              title: const Text('Ubah Kata Sandi'),
-              subtitle: const Text('Ganti kata sandi akun Anda'),
+              title: Text(appLang.getText("change_password")),
+              subtitle: Text(appLang.getText("change_password_sub")),
               onTap: () {
-                // Aksi ketika menu Ubah Kata Sandi ditekan
                 showDialog(
                   context: context,
                   builder: (context) {
@@ -33,29 +36,30 @@ class KeamananPage extends StatelessWidget {
                     final confirmPasswordController = TextEditingController();
 
                     return AlertDialog(
-                      title: const Text('Ganti Kata Sandi'),
+                      title: Text(appLang.getText("change_password")),
                       content: SingleChildScrollView(
                         child: Column(
                           children: [
                             TextField(
                               controller: oldPasswordController,
                               obscureText: true,
-                              decoration: const InputDecoration(
-                                labelText: 'Password Lama',
+                              decoration: InputDecoration(
+                                labelText: appLang.getText("old_password"),
                               ),
                             ),
                             TextField(
                               controller: newPasswordController,
                               obscureText: true,
-                              decoration: const InputDecoration(
-                                labelText: 'Password Baru',
+                              decoration: InputDecoration(
+                                labelText: appLang.getText("new_password"),
                               ),
                             ),
                             TextField(
                               controller: confirmPasswordController,
                               obscureText: true,
-                              decoration: const InputDecoration(
-                                labelText: 'Konfirmasi Password Baru',
+                              decoration: InputDecoration(
+                                labelText:
+                                    appLang.getText("confirm_new_password"),
                               ),
                             ),
                           ],
@@ -63,32 +67,32 @@ class KeamananPage extends StatelessWidget {
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () {
-                            Navigator.pop(context); // tutup dialog
-                          },
-                          child: const Text('Batal'),
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(appLang.getText("cancel")),
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            // validasi sederhana dulu
                             if (newPasswordController.text !=
                                 confirmPasswordController.text) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                        Text('Password baru tidak cocok!')),
+                                SnackBar(
+                                  content: Text(
+                                    appLang.getText("password_not_match"),
+                                  ),
+                                ),
                               );
                             } else {
-                              // nanti nanti bisa sambung ke API
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text(
-                                        'Password berhasil diganti (dummy)')),
+                                SnackBar(
+                                  content: Text(
+                                    appLang.getText("password_changed"),
+                                  ),
+                                ),
                               );
                               Navigator.pop(context);
                             }
                           },
-                          child: const Text('Ganti'),
+                          child: Text(appLang.getText("change")),
                         ),
                       ],
                     );
@@ -102,31 +106,31 @@ class KeamananPage extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.fingerprint, color: Colors.green),
-              title: const Text('Autentikasi Biometrik'),
-              subtitle: const Text('Aktifkan autentikasi biometrik'),
+              title: Text(appLang.getText("biometric_auth")),
+              subtitle: Text(appLang.getText("biometric_auth_sub")),
               onTap: () {
-                // Aksi ketika menu Autentikasi Biometrik ditekan
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Autentikasi Biometrik'),
-                    content: const Text(
-                        'Aktifkan autentikasi biometrik pada akun Anda?'),
+                    title: Text(appLang.getText("biometric_auth")),
+                    content: Text(appLang.getText("biometric_auth_confirm")),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Batal'),
+                        child: Text(appLang.getText("cancel")),
                       ),
                       ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          // update status biometrik dummy
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Biometrik diaktifkan (dummy)')),
+                            SnackBar(
+                              content: Text(
+                                appLang.getText("biometric_enabled"),
+                              ),
+                            ),
                           );
                         },
-                        child: const Text('Ya'),
+                        child: Text(appLang.getText("yes")),
                       ),
                     ],
                   ),
@@ -139,11 +143,9 @@ class KeamananPage extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.security, color: Colors.orange),
-              title: const Text('Keamanan Akun'),
-              subtitle: const Text('Pengaturan keamanan akun Anda'),
-              onTap: () {
-                // Aksi ketika menu Keamanan Akun ditekan
-              },
+              title: Text(appLang.getText("account_security")),
+              subtitle: Text(appLang.getText("account_security_sub")),
+              onTap: () {},
             ),
           ),
           Card(
@@ -151,11 +153,9 @@ class KeamananPage extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.privacy_tip, color: Colors.purple),
-              title: const Text('Privasi'),
-              subtitle: const Text('Pengaturan privasi aplikasi'),
-              onTap: () {
-                // Aksi ketika menu Privasi ditekan
-              },
+              title: Text(appLang.getText("privacy")),
+              subtitle: Text(appLang.getText("privacy_sub")),
+              onTap: () {},
             ),
           ),
         ],
