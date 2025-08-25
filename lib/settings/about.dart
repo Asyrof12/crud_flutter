@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:card/settings/hamburger.dart';
+import '../providers/AppLanguage.dart';
+import 'package:card/utils/lang.dart'; // file Lang kamu
+
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final appLanguage = Provider.of<AppLanguage>(context); // ambil bahasa aktif
+    final lang = Lang.texts[appLanguage.currentLang]!; // ambil teks sesuai bahasa
+    
     return Scaffold(
       appBar: AppBar(
         leading: const CustomHamburger(),
-        title: const Text("About Aplikasi"),
+        title: Text(lang['about']!), // <-- sudah multi-language
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -18,7 +25,7 @@ class AboutPage extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.info, color: Colors.blue),
-              title: const Text('Nama Aplikasi'),
+              title: Text(lang['Aplikasi Kontak']!), // Nama Aplikasi
               subtitle: const Text('Aplikasi Kontak'),
             ),
           ),
@@ -27,7 +34,7 @@ class AboutPage extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.verified, color: Colors.green),
-              title: const Text('Versi'),
+              title: Text(lang['version']!),
               subtitle: const Text('1.0.0'),
             ),
           ),
@@ -36,7 +43,7 @@ class AboutPage extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.person, color: Colors.orange),
-              title: const Text('Dikembangkan oleh'),
+              title: Text(lang['developer']!),
               subtitle: const Text('SMKN 1 Pasuruan'),
             ),
           ),
@@ -45,7 +52,7 @@ class AboutPage extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.email, color: Colors.red),
-              title: const Text('Kontak'),
+              title: Text(lang['kontak']!),
               subtitle: const Text('skensa@gmail.com'),
             ),
           ),

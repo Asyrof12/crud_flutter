@@ -30,6 +30,8 @@ class Lang {
       'about_app': 'This app is created for contact management',
       'version': 'Version',
       'developer': 'Developer',
+      'Aplikasi Kontak': 'Contact App',
+      'kontak': 'Contact',
 
       // Keamanan Page
       'change_password': 'Change Password',
@@ -40,33 +42,11 @@ class Lang {
       'password_updated': 'Password updated successfully',
 
       // Hamburger Menu
-      'menu_home': 'Home',
-      'menu_about': 'About',
+      'menu_contacts': 'Contacts',
+      'menu_about': 'About App',
       'menu_settings': 'Settings',
       'menu_logout': 'Logout',
 
-      'welcome': 'Welcome',
-      'contact_list': 'Contact List',
-      'created_at': 'Created',
-      'add_contact': 'Add Contact',
-      'edit_contact': 'Edit Contact',
-      'name': 'Name',
-      'phone': 'Phone Number',
-      'name_phone_required': 'Name & phone are required',
-      'add_success': 'Contact added',
-      'add_failed': 'Failed to add contact',
-      'edit_success': 'Contact updated',
-      'edit_failed': 'Failed to update contact',
-      'delete': 'Delete',
-      'delete_success': 'Contact deleted',
-      'delete_failed': 'Failed to delete contact',
-      'confirm_delete_title': 'Delete Confirmation',
-      'confirm_delete_message': 'Delete contact "{name}"?',
-      'load_failed': 'Failed to load data',
-      'data_format_invalid': 'Data format is not a list',
-      'error': 'Error',
-      'no_name': 'No name',
-      'no_phone': 'No phone',
     },
     'id': {
       // General
@@ -76,29 +56,6 @@ class Lang {
       'language_changed': 'Bahasa diubah',
       'ok': 'Oke',
       'close': 'Tutup',
-
-      'welcome': 'Selamat datang',
-      'contact_list': 'Daftar Kontak',
-      'created_at': 'Dibuat',
-      'add_contact': 'Tambah Kontak',
-      'edit_contact': 'Edit Kontak',
-      'name': 'Nama',
-      'phone': 'Nomor Telepon',
-      'name_phone_required': 'Nama & nomor harus diisi',
-      'add_success': 'Berhasil tambah kontak',
-      'add_failed': 'Gagal tambah kontak',
-      'edit_success': 'Berhasil ubah kontak',
-      'edit_failed': 'Gagal ubah kontak',
-      'delete': 'Hapus',
-      'delete_success': 'Data berhasil dihapus',
-      'delete_failed': 'Gagal menghapus data',
-      'confirm_delete_title': 'Konfirmasi Hapus',
-      'confirm_delete_message': 'Hapus kontak "{name}"?',
-      'load_failed': 'Gagal memuat data',
-      'data_format_invalid': 'Data tidak dalam format list',
-      'error': 'Error',
-      'no_name': 'Tanpa Nama',
-      'no_phone': 'Tidak ada nomor',
 
       // Setting Page
       'setting': 'Pengaturan',
@@ -121,6 +78,8 @@ class Lang {
       'about_app': 'Aplikasi ini dibuat untuk manajemen kontak',
       'version': 'Versi',
       'developer': 'Pengembang',
+      'Aplikasi Kontak': 'Aplikasi Kontak',
+      'kontak': 'Kontak',
 
       // Keamanan Page
       'change_password': 'Ubah Kata Sandi',
@@ -131,8 +90,8 @@ class Lang {
       'password_updated': 'Kata sandi berhasil diperbarui',
 
       // Hamburger Menu
-      'menu_home': 'Beranda',
-      'menu_about': 'Tentang',
+      'menu_contacts': 'Daftar Kontak',
+      'menu_about': 'Tentang Aplikasi',
       'menu_settings': 'Pengaturan',
       'menu_logout': 'Keluar',
     },

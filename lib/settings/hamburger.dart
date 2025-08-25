@@ -4,6 +4,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:card/settings/about.dart';
 import 'package:card/card.dart';
 import 'package:card/auth_screens/screens.dart';
+import 'package:provider/provider.dart';
+import 'package:card/providers/AppLanguage.dart';
+
 
 class CustomHamburger extends StatelessWidget {
   final String? username;
@@ -42,44 +45,52 @@ class CustomHamburger extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               items: [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'contacts',
-                  child: Row(
-                    children: [
-                      Icon(Icons.contacts, size: 20),
-                      SizedBox(width: 8),
-                      Text('Daftar Kontak'),
-                    ],
+                  child: Consumer<AppLanguage>(
+                    builder: (context, lang, _) => Row(
+                      children: [
+                        const Icon(Icons.contacts, size: 20),
+                        const SizedBox(width: 8),
+                        Text(lang.getText('menu_contacts')),
+                      ],
+                    ),
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'about',
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 20),
-                      SizedBox(width: 8),
-                      Text('About Aplikasi'),
-                    ],
+                  child: Consumer<AppLanguage>(
+                    builder: (context, lang, _) => Row(
+                      children: [
+                        const Icon(Icons.info_outline, size: 20),
+                        const SizedBox(width: 8),
+                        Text(lang.getText('menu_about')),
+                      ],
+                    ),
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'settings',
-                  child: Row(
-                    children: [
-                      Icon(Icons.settings, size: 20),
-                      SizedBox(width: 8),
-                      Text('Setting'),
-                    ],
+                  child: Consumer<AppLanguage>(
+                    builder: (context, lang, _) => Row(
+                      children: [
+                        const Icon(Icons.settings, size: 20),
+                        const SizedBox(width: 8),
+                        Text(lang.getText('menu_settings')),
+                      ],
+                    ),
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, size: 20),
-                      SizedBox(width: 8),
-                      Text('Logout'),
-                    ],
+                  child: Consumer<AppLanguage>(
+                    builder: (context, lang, _) => Row(
+                      children: [
+                        const Icon(Icons.logout, size: 20),
+                        const SizedBox(width: 8),
+                        Text(lang.getText('menu_logout')),
+                      ],
+                    ),
                   ),
                 ),
               ],
