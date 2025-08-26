@@ -30,8 +30,9 @@ class Lang {
       'about_app': 'This app is created for contact management',
       'version': 'Version',
       'developer': 'Developer',
-      'Aplikasi Kontak': 'Contact App',
-      'kontak': 'Contact',
+      'app_name': 'App Name',
+      'description': 'Description',
+      'contact': 'Contact',
 
       // Keamanan Page
       "security_settings": "Security Settings",
@@ -114,8 +115,9 @@ class Lang {
       'about_app': 'Aplikasi ini dibuat untuk manajemen kontak',
       'version': 'Versi',
       'developer': 'Pengembang',
-      'Aplikasi Kontak': 'Aplikasi Kontak',
-      'kontak': 'Kontak',
+      'app_name': 'Nama Aplikasi',
+      'description': 'Deskripsi',
+      'contact': 'Kontak',
 
       // Keamanan Page
       "security_settings": "Pengaturan Keamanan",
