@@ -238,14 +238,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final double screenWidth = MediaQuery.of(context).size.width;
     final double containerWidth =
         screenWidth > popupWidthMax ? popupWidthMax : screenWidth - 40;
-    final double toggleWidth = (containerWidth - 8) / 2;
+    final double toggleWidth =
+        containerWidth * 0.43; // ✅ lebih kecil dari setengah
 
     return Container(
       width: containerWidth,
-      height: 44,
+      height: 40,
       decoration: BoxDecoration(
         color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Stack(
         children: [
@@ -256,10 +257,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 alignment: Alignment(-1 + 2 * _slideAnimation.value, 0),
                 child: Container(
                   width: toggleWidth,
-                  height: 44,
+                  height: 36, // sedikit lebih kecil dari container tinggi
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 4), // kasih jarak ke tepi
                   decoration: BoxDecoration(
                     color: activeColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               );
@@ -273,19 +276,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   style: TextButton.styleFrom(
                     foregroundColor:
                         isLoginSelected ? Colors.white : inactiveTextColor,
-                    backgroundColor:
-                        isLoginSelected ? Colors.black : Colors.grey[300],
+                    backgroundColor: Colors.transparent,
                     textStyle: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
-                    padding: EdgeInsets.zero, // 🚀 hilangkan padding default
+                    padding: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: const Center(
-                    // pastikan teks selalu di tengah
                     child: Text(
                       'Sign In',
                       overflow: TextOverflow.ellipsis,
@@ -299,13 +300,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   style: TextButton.styleFrom(
                     foregroundColor:
                         !isLoginSelected ? Colors.white : inactiveTextColor,
-                    backgroundColor:
-                        !isLoginSelected ? Colors.black : Colors.grey[300],
+                    backgroundColor: Colors.transparent,
                     textStyle: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
-                    padding: EdgeInsets.zero, // 🚀 hilangkan padding default
+                    padding: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
