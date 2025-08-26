@@ -59,28 +59,26 @@ class _MyCardState extends State<MyCard> {
     });
 
     try {
-      final url = "${widget.apiUrl}/list-all";
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('id'); // ambil id user login
+
+      if (userId == null) {
+        setState(() {
+          errorMessage = "User belum login!";
+          isLoading = false;
+        });
+        return;
+      }
+
+      final url = "${widget.apiUrl}/list-all?saved_by=$userId"; // pakai filter
       final response = await http.get(Uri.parse(url));
+
       if (response.statusCode == 200) {
         final parsed = jsonDecode(response.body);
-        if (parsed is List) {
-          setState(() {
-            data = parsed;
-            isLoading = false;
-            errorMessage = null;
-          });
-        } else if (parsed is Map && parsed['data'] is List) {
-          setState(() {
-            data = parsed['data'];
-            isLoading = false;
-            errorMessage = null;
-          });
-        } else {
-          setState(() {
-            errorMessage = appLang.getText("invalid_data_format");
-            isLoading = false;
-          });
-        }
+        setState(() {
+          data = parsed is List ? parsed : (parsed['data'] ?? []);
+          isLoading = false;
+        });
       } else {
         setState(() {
           errorMessage =
@@ -108,12 +106,22 @@ class _MyCardState extends State<MyCard> {
 
   Future<void> addPhone() async {
     final appLang = Provider.of<AppLanguage>(context, listen: false);
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('id');
+
     final name = nameController.text.trim();
     final phone = phoneController.text.trim();
 
     if (name.isEmpty || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(appLang.getText("name_phone_required"))),
+      );
+      return;
+    }
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User belum login!")),
       );
       return;
     }
@@ -127,7 +135,11 @@ class _MyCardState extends State<MyCard> {
       final response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'name': name, 'phone': phone}),
+        body: jsonEncode({
+          'name': name,
+          'phone': phone,
+          'saved_by': userId, // penting!
+        }),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -136,8 +148,8 @@ class _MyCardState extends State<MyCard> {
         );
         nameController.clear();
         phoneController.clear();
-        Navigator.of(context).pop(); // tutup modal
-        fetchData(); // reload data kontak
+        Navigator.of(context).pop();
+        fetchData();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -158,6 +170,9 @@ class _MyCardState extends State<MyCard> {
 
   Future<void> editPhone(String id) async {
     final appLang = Provider.of<AppLanguage>(context, listen: false);
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('id'); // ✅ ambil userId di sini
+
     final name = nameController.text.trim();
     final phone = phoneController.text.trim();
 
@@ -173,11 +188,16 @@ class _MyCardState extends State<MyCard> {
     });
 
     try {
-      final url = "${widget.apiUrl}/edit"; // endpoint API edit
+      final url = "${widget.apiUrl}/edit";
       final response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'id': id, 'name': name, 'phone': phone}),
+        body: jsonEncode({
+          'id': id, // jangan lupa kirim id kontak juga
+          'name': name,
+          'phone': phone,
+          'saved_by': userId, // ✅ sekarang ada userId
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -256,13 +276,15 @@ class _MyCardState extends State<MyCard> {
                   children: [
                     TextField(
                       controller: localNameController,
-                      decoration:
-                          InputDecoration(labelText: appLang.getText("name")),
+                      decoration: InputDecoration(
+                        labelText: appLang.getText("name"),
+                      ),
                     ),
                     TextField(
                       controller: localPhoneController,
-                      decoration:
-                          InputDecoration(labelText: appLang.getText("phone")),
+                      decoration: InputDecoration(
+                        labelText: appLang.getText("phone"),
+                      ),
                       keyboardType: TextInputType.phone,
                     ),
                   ],
@@ -284,8 +306,10 @@ class _MyCardState extends State<MyCard> {
                           if (name.isEmpty || phone.isEmpty) {
                             ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                               SnackBar(
-                                  content: Text(
-                                      appLang.getText("name_phone_required"))),
+                                content: Text(
+                                  appLang.getText("name_phone_required"),
+                                ),
+                              ),
                             );
                             return;
                           }
@@ -293,11 +317,19 @@ class _MyCardState extends State<MyCard> {
                           setState(() => isAdding = true);
 
                           try {
+                            // 🔑 ambil id user yang sedang login
+                            final prefs = await SharedPreferences.getInstance();
+                            final userId = prefs.getInt('id');
+
                             final url = "${widget.apiUrl}/add-phone";
                             final response = await http.post(
                               Uri.parse(url),
                               headers: {'Content-Type': 'application/json'},
-                              body: jsonEncode({'name': name, 'phone': phone}),
+                              body: jsonEncode({
+                                'name': name,
+                                'phone': phone,
+                                'saved_by': userId, // ✅ tambahkan saved_by
+                              }),
                             );
 
                             if (response.statusCode == 200 ||
@@ -305,8 +337,9 @@ class _MyCardState extends State<MyCard> {
                               ScaffoldMessenger.of(scaffoldContext)
                                   .showSnackBar(
                                 SnackBar(
-                                    content:
-                                        Text(appLang.getText("contact_added"))),
+                                  content:
+                                      Text(appLang.getText("contact_added")),
+                                ),
                               );
                               Navigator.of(dialogContext).pop();
                               fetchData();
@@ -314,15 +347,19 @@ class _MyCardState extends State<MyCard> {
                               ScaffoldMessenger.of(scaffoldContext)
                                   .showSnackBar(
                                 SnackBar(
-                                    content: Text(
-                                        "${appLang.getText("failed_add")} (${response.statusCode})")),
+                                  content: Text(
+                                    "${appLang.getText("failed_add")} (${response.statusCode})",
+                                  ),
+                                ),
                               );
                             }
                           } catch (e) {
                             ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                               SnackBar(
-                                  content: Text(
-                                      "${appLang.getText("error_msg")}: $e")),
+                                content: Text(
+                                  "${appLang.getText("error_msg")}: $e",
+                                ),
+                              ),
                             );
                           } finally {
                             setState(() => isAdding = false);
@@ -333,7 +370,9 @@ class _MyCardState extends State<MyCard> {
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : Text(appLang.getText("add")),
                 ),
