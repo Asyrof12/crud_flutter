@@ -108,7 +108,7 @@ class _AboutPageState extends State<AboutPage> {
             margin: const EdgeInsets.only(bottom: 16),
             child: ListTile(
               leading: const Icon(Icons.email, color: Colors.red),
-              title: Text(lang['kontak'] ?? "Kontak"),
+              title: Text(lang['contact'] ?? "Kontak"),
               subtitle: Text(aboutData["kontak"] ?? "-"),
             ),
           ),
