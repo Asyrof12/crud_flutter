@@ -22,7 +22,10 @@ class MyCard extends StatefulWidget {
 }
 
 class _MyCardState extends State<MyCard> {
+  // Original data from API
   List data = [];
+  // Data list to be displayed after filtering
+  List _filteredData = [];
   bool isLoading = true;
   String? errorMessage;
 
@@ -31,16 +34,32 @@ class _MyCardState extends State<MyCard> {
   final TextEditingController phoneController = TextEditingController();
   bool isAddingOrEditing = false;
 
+  // Controller untuk search
+  final TextEditingController _searchController = TextEditingController();
+
+  bool _isSearching = false;
+
+  String? savedUsername;
+  int? savedId;
+  String? savedPhone;
+
   @override
   void initState() {
     super.initState();
     _loadUser();
     fetchData();
+    // Listener untuk memanggil fungsi filter setiap kali teks di search bar berubah
+    _searchController.addListener(_filterData);
   }
 
-  String? savedUsername;
-  int? savedId;
-  String? savedPhone;
+  @override
+  void dispose() {
+    // Penting untuk membersihkan controller saat widget tidak lagi digunakan
+    _searchController.dispose();
+    nameController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
 
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
@@ -48,6 +67,19 @@ class _MyCardState extends State<MyCard> {
       savedUsername = prefs.getString('username') ?? 'User';
       savedId = prefs.getInt('id');
       savedPhone = prefs.getString('phone') ?? '';
+    });
+  }
+
+  // Fungsi baru untuk melakukan filter pada data
+  void _filterData() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredData = data.where((item) {
+        final name = item['name']?.toString().toLowerCase() ?? '';
+        final phone = item['phone']?.toString().toLowerCase() ?? '';
+        // Cek apakah nama atau nomor telepon mengandung query
+        return name.contains(query) || phone.contains(query);
+      }).toList();
     });
   }
 
@@ -60,7 +92,7 @@ class _MyCardState extends State<MyCard> {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getInt('id'); // ambil id user login
+      final userId = prefs.getInt('id');
 
       if (userId == null) {
         setState(() {
@@ -70,13 +102,15 @@ class _MyCardState extends State<MyCard> {
         return;
       }
 
-      final url = "${widget.apiUrl}/list-all?saved_by=$userId"; // pakai filter
+      final url = "${widget.apiUrl}/list-all?saved_by=$userId";
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
         final parsed = jsonDecode(response.body);
         setState(() {
           data = parsed is List ? parsed : (parsed['data'] ?? []);
+          // Setelah data didapat, langsung panggil filter
+          _filterData();
           isLoading = false;
         });
       } else {
@@ -138,7 +172,7 @@ class _MyCardState extends State<MyCard> {
         body: jsonEncode({
           'name': name,
           'phone': phone,
-          'saved_by': userId, // penting!
+          'saved_by': userId,
         }),
       );
 
@@ -171,7 +205,7 @@ class _MyCardState extends State<MyCard> {
   Future<void> editPhone(String id) async {
     final appLang = Provider.of<AppLanguage>(context, listen: false);
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getInt('id'); // ✅ ambil userId di sini
+    final userId = prefs.getInt('id');
 
     final name = nameController.text.trim();
     final phone = phoneController.text.trim();
@@ -193,10 +227,10 @@ class _MyCardState extends State<MyCard> {
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'id': id, // jangan lupa kirim id kontak juga
+          'id': id,
           'name': name,
           'phone': phone,
-          'saved_by': userId, // ✅ sekarang ada userId
+          'saved_by': userId,
         }),
       );
 
@@ -239,7 +273,7 @@ class _MyCardState extends State<MyCard> {
             backgroundColor: Colors.red,
           ),
         );
-        await fetchData(); // refresh data
+        await fetchData();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -258,7 +292,7 @@ class _MyCardState extends State<MyCard> {
     final appLang = Provider.of<AppLanguage>(context, listen: false);
     final localNameController = TextEditingController();
     final localPhoneController = TextEditingController();
-    final scaffoldContext = context; // context Scaffold utama
+    final scaffoldContext = context;
 
     showDialog(
       context: scaffoldContext,
@@ -317,7 +351,6 @@ class _MyCardState extends State<MyCard> {
                           setState(() => isAdding = true);
 
                           try {
-                            // 🔑 ambil id user yang sedang login
                             final prefs = await SharedPreferences.getInstance();
                             final userId = prefs.getInt('id');
 
@@ -328,7 +361,7 @@ class _MyCardState extends State<MyCard> {
                               body: jsonEncode({
                                 'name': name,
                                 'phone': phone,
-                                'saved_by': userId, // ✅ tambahkan saved_by
+                                'saved_by': userId,
                               }),
                             );
 
@@ -391,7 +424,7 @@ class _MyCardState extends State<MyCard> {
     final idController =
         TextEditingController(text: contact['id']?.toString() ?? '');
 
-    final rootContext = context; // context Scaffold utama
+    final rootContext = context;
 
     showDialog(
       context: rootContext,
@@ -432,12 +465,10 @@ class _MyCardState extends State<MyCard> {
               onPressed: isAddingOrEditing
                   ? null
                   : () async {
-                      Navigator.of(dialogContext).pop(); // tutup dialog dulu
+                      Navigator.of(dialogContext).pop();
                       await editPhone(idController.text);
-                      ScaffoldMessenger.of(rootContext).showSnackBar(
-                        SnackBar(
-                            content: Text(appLang.getText("contact_updated"))),
-                      );
+                      // Hapus snackbar yang tidak perlu di sini
+                      // karena sudah ada di dalam fungsi editPhone
                     },
               child: isAddingOrEditing
                   ? const SizedBox(
@@ -528,19 +559,73 @@ class _MyCardState extends State<MyCard> {
                 ? Center(child: Text(errorMessage!))
                 : ListView(
                     children: [
+                      // 🔹 HEADER (akan ikut scroll ke atas)
                       Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          appLang.getText("contact_list"),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                appLang.getText("contact_list"),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                              width: _isSearching ? 240 : 44,
+                              height: 40,
+                              child: _isSearching
+                                  ? TextField(
+                                      controller: _searchController,
+                                      autofocus: true,
+                                      textInputAction: TextInputAction.search,
+                                      onChanged: (_) => _filterData(),
+                                      decoration: InputDecoration(
+                                        hintText: appLang.getText('Pencarian'),
+                                        isDense: true,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                        suffixIcon: IconButton(
+                                          icon: const Icon(Icons.close),
+                                          onPressed: () {
+                                            setState(() {
+                                              _isSearching = false;
+                                              _searchController.clear();
+                                              _filteredData = data;
+                                            });
+                                          },
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8.0),
+                                        ),
+                                      ),
+                                    )
+                                  : IconButton(
+                                      icon: const Icon(Icons.search),
+                                      onPressed: () {
+                                        setState(() {
+                                          _isSearching = true;
+                                        });
+                                      },
+                                    ),
+                            ),
+                          ],
                         ),
                       ),
-                      ...data.map((item) {
+
+                      // 🔹 LIST KONTAK
+                      ..._filteredData.map((item) {
                         return Card(
-                          margin: const EdgeInsets.all(8),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
                           child: ListTile(
                             title: Text(
                                 item['name'] ?? appLang.getText("no_name")),
