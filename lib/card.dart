@@ -288,6 +288,26 @@ class _MyCardState extends State<MyCard> {
     }
   }
 
+  Future<void> _toggleFavorite(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> favorites = prefs.getStringList('favorites') ?? [];
+
+    setState(() {
+      if (favorites.contains(id)) {
+        favorites.remove(id);
+      } else {
+        favorites.add(id);
+      }
+    });
+
+    await prefs.setStringList('favorites', favorites);
+  }
+
+  Future<List<String>> getFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList('favorites') ?? [];
+  }
+
   void showAddContactModal() {
     final appLang = Provider.of<AppLanguage>(context, listen: false);
     final localNameController = TextEditingController();
@@ -647,6 +667,25 @@ class _MyCardState extends State<MyCard> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                FutureBuilder<List<String>>(
+                                  future: getFavorites(),
+                                  builder: (context, snapshot) {
+                                    final favorites = snapshot.data ?? [];
+                                    final isFavorite = favorites
+                                        .contains(item['id'].toString());
+
+                                    return IconButton(
+                                      icon: Icon(
+                                        isFavorite
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: isFavorite ? Colors.red : null,
+                                      ),
+                                      onPressed: () => _toggleFavorite(
+                                          item['id'].toString()),
+                                    );
+                                  },
+                                ),
                                 IconButton(
                                   icon: const Icon(Icons.edit),
                                   onPressed: () => showEditContactModal(item),

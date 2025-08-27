@@ -1,3 +1,4 @@
+import 'package:card/settings/favorite_page.dart';
 import 'package:card/settings/setting_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -6,7 +7,6 @@ import 'package:card/card.dart';
 import 'package:card/auth_screens/screens.dart';
 import 'package:provider/provider.dart';
 import 'package:card/providers/AppLanguage.dart';
-
 
 class CustomHamburger extends StatelessWidget {
   final String? username;
@@ -82,6 +82,18 @@ class CustomHamburger extends StatelessWidget {
                   ),
                 ),
                 PopupMenuItem(
+                  value: 'favorit',
+                  child: Consumer<AppLanguage>(
+                    builder: (context, lang, _) => Row(
+                      children: [
+                        const Icon(Icons.favorite, size: 20),
+                        const SizedBox(width: 8),
+                        Text(lang.getText('favorit')),
+                      ],
+                    ),
+                  ),
+                ),
+                PopupMenuItem(
                   value: 'logout',
                   child: Consumer<AppLanguage>(
                     builder: (context, lang, _) => Row(
@@ -118,6 +130,14 @@ class CustomHamburger extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const MySetting(),
+                ),
+              );
+            } else if (selected == 'favorit') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      FavoritPage(apiUrl: dotenv.env['API_URL'] ?? ''),
                 ),
               );
             } else if (selected == 'logout') {
