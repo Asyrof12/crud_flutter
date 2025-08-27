@@ -84,6 +84,8 @@ class Lang {
       "error_msg": "Error",
       "invalid_data_format": "Invalid data format",
       "failed_load": "Failed to load data",
+      "no_data": "No data available",
+      "search": "Search"
     },
     'id': {
       // General
@@ -169,6 +171,8 @@ class Lang {
       "error_msg": "Error",
       "invalid_data_format": "Data tidak dalam format list",
       "failed_load": "Gagal load data",
+      "no_data": "Tidak ada data",
+      "search": "Pencarian"
     },
   };
 }

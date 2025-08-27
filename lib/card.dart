@@ -585,7 +585,7 @@ class _MyCardState extends State<MyCard> {
                                       textInputAction: TextInputAction.search,
                                       onChanged: (_) => _filterData(),
                                       decoration: InputDecoration(
-                                        hintText: appLang.getText('Pencarian'),
+                                        hintText: appLang.getText("search"),
                                         isDense: true,
                                         contentPadding:
                                             const EdgeInsets.symmetric(
