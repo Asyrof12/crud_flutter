@@ -215,7 +215,7 @@ class _MyCardState extends State<MyCard> {
         body: jsonEncode({
           'name': name,
           'phone': phone,
-          'saved_by': userId,
+          'idUser': userId,
         }),
       );
 
@@ -273,7 +273,7 @@ class _MyCardState extends State<MyCard> {
           'id': id,
           'name': name,
           'phone': phone,
-          'saved_by': userId,
+          'idUser': userId,
         }),
       );
 
@@ -455,7 +455,7 @@ class _MyCardState extends State<MyCard> {
                               body: jsonEncode({
                                 'name': name,
                                 'phone': phone,
-                                'saved_by': userId,
+                                'idUser': userId,
                               }),
                             );
 
