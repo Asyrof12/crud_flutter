@@ -39,6 +39,33 @@ class _MyCardState extends State<MyCard> {
 
   bool _isSearching = false;
 
+  // --- Tambahan untuk grouping A–Z ---
+  Map<String, List<Map<String, dynamic>>> _grouped = {};
+  List<String> _sectionOrder = [];
+
+  String _firstLetter(Map item) {
+    final name = (item['name'] ?? '').toString().trim();
+    if (name.isEmpty) return '#';
+    final first = name[0].toUpperCase();
+    final isAZ = RegExp(r'^[A-Z]$').hasMatch(first);
+    return isAZ ? first : '#'; // kalau angka/simbol → masuk '#'
+  }
+
+  void _rebuildGroups() {
+    _grouped.clear();
+
+    for (final item in _filteredData) {
+      final letter = _firstLetter(item);
+      (_grouped[letter] ??= []).add(item);
+    }
+
+    _sectionOrder = _grouped.keys.toList()..sort();
+    if (_sectionOrder.contains('#')) {
+      _sectionOrder.remove('#');
+      _sectionOrder.add('#');
+    }
+  }
+
   String? savedUsername;
   int? savedId;
   String? savedPhone;
@@ -73,14 +100,24 @@ class _MyCardState extends State<MyCard> {
   // Fungsi baru untuk melakukan filter pada data
   void _filterData() {
     final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredData = data.where((item) {
-        final name = item['name']?.toString().toLowerCase() ?? '';
-        final phone = item['phone']?.toString().toLowerCase() ?? '';
-        // Cek apakah nama atau nomor telepon mengandung query
-        return name.contains(query) || phone.contains(query);
-      }).toList();
+
+    _filteredData = data.where((item) {
+      final name = item['name']?.toString().toLowerCase() ?? '';
+      final phone = item['phone']?.toString().toLowerCase() ?? '';
+      return name.contains(query) || phone.contains(query);
+    }).toList();
+
+    // urutkan by nama
+    _filteredData.sort((a, b) {
+      final an = (a['name'] ?? '').toString().toLowerCase();
+      final bn = (b['name'] ?? '').toString().toLowerCase();
+      return an.compareTo(bn);
     });
+
+    // rebuild section A-Z
+    _rebuildGroups();
+
+    setState(() {}); // trigger UI
   }
 
   Future<void> fetchData() async {
@@ -678,58 +715,85 @@ class _MyCardState extends State<MyCard> {
                         ),
                       ),
 
-                      // 🔹 LIST KONTAK
-                      ..._filteredData.map((item) {
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 4),
-                          child: ListTile(
-                            title: Text(
-                                item['name'] ?? appLang.getText("no_name")),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(item['phone'] ??
-                                    appLang.getText("no_phone_number")),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "${appLang.getText("created_at")}: ${formatDate(item['created_at'])}",
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.blue,
-                                  ),
+                      // 🔹 LIST KONTAK A–Z
+                      ..._sectionOrder.map((letter) {
+                        final items = _grouped[letter]!;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header huruf (A, B, C, dst)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 5),
+                              color: Colors.grey.shade200,
+                              child: Text(
+                                letter,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black54,
                                 ),
-                              ],
+                              ),
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    (item['is_favourite'] == 1)
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    color: (item['is_favourite'] == 1)
-                                        ? Colors.red
-                                        : null,
+
+                            // Daftar kontak dalam huruf itu
+                            ...items.map((item) {
+                              return Card(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
+                                child: ListTile(
+                                  title: Text(item['name'] ??
+                                      appLang.getText("no_name")),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(item['phone'] ??
+                                          appLang.getText("no_phone_number")),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "${appLang.getText("created_at")}: ${formatDate(item['created_at'])}",
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  onPressed: () => _toggleFavorite(
-                                    item['id'].toString(),
-                                    item['is_favourite'] == 1,
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          (item['is_favourite'] == 1)
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: (item['is_favourite'] == 1)
+                                              ? Colors.red
+                                              : null,
+                                        ),
+                                        onPressed: () => _toggleFavorite(
+                                          item['id'].toString(),
+                                          item['is_favourite'] == 1,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: () =>
+                                            showEditContactModal(item),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete),
+                                        onPressed: () =>
+                                            showDeleteConfirmDialog(item),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () => showEditContactModal(item),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () =>
-                                      showDeleteConfirmDialog(item),
-                                ),
-                              ],
-                            ),
-                          ),
+                              );
+                            }).toList(),
+                          ],
                         );
                       }).toList(),
                     ],
