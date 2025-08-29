@@ -294,25 +294,56 @@ class _MyCardState extends State<MyCard> {
     }
   }
 
-  Future<void> _toggleFavorite(String id) async {
+  Future<void> _toggleFavorite(String id, bool currentValue) async {
     final prefs = await SharedPreferences.getInstance();
-    List<String> favorites = prefs.getStringList('favorites') ?? [];
+    final userId = prefs.getInt('id');
 
-    setState(() {
-      if (favorites.contains(id)) {
-        favorites.remove(id);
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User belum login!")),
+      );
+      return;
+    }
+
+    try {
+      final url = "${widget.apiUrl}/favourite";
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "id": id,
+          "is_favourite": currentValue ? 0 : 1, // toggle nilai
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          // update list di UI
+          data = data.map((item) {
+            if (item['id'].toString() == id) {
+              item['is_favourite'] = currentValue ? 0 : 1;
+            }
+            return item;
+          }).toList();
+          _filterData(); // supaya hasil filter tetap sinkron
+        });
       } else {
-        favorites.add(id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text("Gagal update favorite (${response.statusCode})")),
+        );
       }
-    });
-
-    await prefs.setStringList('favorites', favorites);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
   }
 
-  Future<List<String>> getFavorites() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList('favorites') ?? [];
-  }
+  // Future<List<String>> getFavorites() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   return prefs.getStringList('favorites') ?? [];
+  // }
 
   void showAddContactModal() {
     final appLang = Provider.of<AppLanguage>(context, listen: false);
@@ -673,24 +704,19 @@ class _MyCardState extends State<MyCard> {
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                FutureBuilder<List<String>>(
-                                  future: getFavorites(),
-                                  builder: (context, snapshot) {
-                                    final favorites = snapshot.data ?? [];
-                                    final isFavorite = favorites
-                                        .contains(item['id'].toString());
-
-                                    return IconButton(
-                                      icon: Icon(
-                                        isFavorite
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color: isFavorite ? Colors.red : null,
-                                      ),
-                                      onPressed: () => _toggleFavorite(
-                                          item['id'].toString()),
-                                    );
-                                  },
+                                IconButton(
+                                  icon: Icon(
+                                    (item['is_favourite'] == 1)
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: (item['is_favourite'] == 1)
+                                        ? Colors.red
+                                        : null,
+                                  ),
+                                  onPressed: () => _toggleFavorite(
+                                    item['id'].toString(),
+                                    item['is_favourite'] == 1,
+                                  ),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.edit),
