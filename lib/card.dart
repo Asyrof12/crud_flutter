@@ -735,87 +735,99 @@ class _MyCardState extends State<MyCard> {
                       // 🔹 LIST KONTAK A–Z
                       ..._sectionOrder.map((letter) {
                         final items = _grouped[letter]!;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Header huruf (A, B, C, dst)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 5),
-                              color: Colors.grey.shade200,
-                              child: Text(
-                                letter,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black54,
+
+                        return Container(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4), // space luar grup
+                          padding:
+                              const EdgeInsets.only(bottom: 4), // space bawah
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                  color: Colors.grey.shade300, width: 1),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header huruf
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 2),
+                                child: Text(
+                                  letter,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black54,
+                                    letterSpacing: 1.0,
+                                  ),
                                 ),
                               ),
-                            ),
 
-                            // Daftar kontak dalam huruf itu
-                            ...items.map((item) {
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 4),
-                                child: ListTile(
-                                  title: Text(item['name'] ??
-                                      appLang.getText("no_name")),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['phone'] != null &&
-                                                item['phone']!.isNotEmpty
-                                            ? formatPhone(item['phone']!)
-                                            : appLang
-                                                .getText("no_phone_number"),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        "${appLang.getText("created_at")}: ${formatDate(item['created_at'])}",
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.blue,
+                              // Daftar kontak dalam huruf itu
+                              ...items.map((item) {
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
+                                  child: ListTile(
+                                    title: Text(item['name'] ??
+                                        appLang.getText("no_name")),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item['phone'] != null &&
+                                                  item['phone']!.isNotEmpty
+                                              ? formatPhone(item['phone']!)
+                                              : appLang
+                                                  .getText("no_phone_number"),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "${appLang.getText("created_at")}: ${formatDate(item['created_at'])}",
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.blue,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            (item['is_favourite'] == 1)
+                                                ? Icons.favorite
+                                                : Icons.favorite_border,
+                                            color: (item['is_favourite'] == 1)
+                                                ? Colors.red
+                                                : null,
+                                          ),
+                                          onPressed: () => _toggleFavorite(
+                                            item['id'].toString(),
+                                            item['is_favourite'] == 1,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit),
+                                          onPressed: () =>
+                                              showEditContactModal(item),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete),
+                                          onPressed: () =>
+                                              showDeleteConfirmDialog(item),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          (item['is_favourite'] == 1)
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          color: (item['is_favourite'] == 1)
-                                              ? Colors.red
-                                              : null,
-                                        ),
-                                        onPressed: () => _toggleFavorite(
-                                          item['id'].toString(),
-                                          item['is_favourite'] == 1,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed: () =>
-                                            showEditContactModal(item),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete),
-                                        onPressed: () =>
-                                            showDeleteConfirmDialog(item),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ],
+                                );
+                              }).toList(),
+                            ],
+                          ),
                         );
                       }).toList(),
                     ],
@@ -861,7 +873,6 @@ class _MyCardState extends State<MyCard> {
   }
 }
 
-
 // buat formatter untuk nomor telepon - format: xxx-xxxx-xxxx
 
 // formatter add telepon
@@ -886,7 +897,7 @@ class PhoneNumberFormatter extends TextInputFormatter {
   }
 }
 
-// formatter edit telepon
+// formatter edirt telepon
 String formatPhone(String phone) {
   var digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
   var newText = '';
