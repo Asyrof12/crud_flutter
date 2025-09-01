@@ -861,6 +861,10 @@ class _MyCardState extends State<MyCard> {
   }
 }
 
+
+// buat formatter untuk nomor telepon - format: xxx-xxxx-xxxx
+
+// formatter add telepon
 class PhoneNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -882,6 +886,7 @@ class PhoneNumberFormatter extends TextInputFormatter {
   }
 }
 
+// formatter edit telepon
 String formatPhone(String phone) {
   var digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
   var newText = '';
