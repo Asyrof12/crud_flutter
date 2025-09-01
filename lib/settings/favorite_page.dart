@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:card/providers/AppLanguage.dart';
 
 class FavoritPage extends StatefulWidget {
   final String apiUrl;
@@ -14,8 +16,6 @@ class FavoritPage extends StatefulWidget {
 class _FavoritPageState extends State<FavoritPage> {
   List<Map<String, dynamic>> data = [];
   bool isLoading = true;
-
-  // track id yang sedang diproses agar tidak double klik
   final Set<int> _pending = {};
 
   int _toInt(dynamic v) {
@@ -36,6 +36,7 @@ class _FavoritPageState extends State<FavoritPage> {
   Future<void> _loadFavorites() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('id');
+    final lang = Provider.of<AppLanguage>(context, listen: false);
 
     if (userId == null) {
       setState(() {
@@ -58,7 +59,6 @@ class _FavoritPageState extends State<FavoritPage> {
       final list = List<Map<String, dynamic>>.from(allData);
 
       setState(() {
-        // ambil hanya data yang favorit (tahan terhadap '1' atau 1)
         data = list.where(_isFav).toList();
         isLoading = false;
       });
@@ -67,11 +67,15 @@ class _FavoritPageState extends State<FavoritPage> {
         isLoading = false;
         data = [];
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(lang.getText("failed_load"))),
+      );
     }
   }
 
   Future<void> _deleteContact(Map item) async {
     final id = _toInt(item['id']);
+    final lang = Provider.of<AppLanguage>(context, listen: false);
 
     try {
       final response = await http.post(
@@ -88,8 +92,10 @@ class _FavoritPageState extends State<FavoritPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text("Kontak ${item['name']} berhasil dihapus"),
-              backgroundColor: Colors.red,
+              content: Text(
+                "${lang.getText("contact_deleted")}: ${item['name']}",
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
           );
         }
@@ -97,7 +103,9 @@ class _FavoritPageState extends State<FavoritPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text("Gagal hapus kontak (error ${response.statusCode})"),
+              content: Text(
+                "${lang.getText("failed_delete")} (${response.statusCode})",
+              ),
             ),
           );
         }
@@ -105,30 +113,34 @@ class _FavoritPageState extends State<FavoritPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Terjadi kesalahan: $e")),
+          SnackBar(
+            content: Text("${lang.getText("error_msg")}: $e"),
+          ),
         );
       }
     }
   }
 
   void showDeleteConfirmDialog(Map item) {
+    final lang = Provider.of<AppLanguage>(context, listen: false);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Hapus Kontak"),
-          content: Text("Yakin hapus ${item['name']}?"),
+          title: Text(lang.getText("confirm_delete")),
+          content: Text("${lang.getText("delete_contact_q")}: ${item['name']}?"),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Batal"),
+              child: Text(lang.getText("cancel")),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 Future.microtask(() => _deleteContact(item));
               },
-              child: const Text("Hapus"),
+              child: Text(lang.getText("delete_contact")),
             ),
           ],
         );
@@ -137,16 +149,16 @@ class _FavoritPageState extends State<FavoritPage> {
   }
 
   Future<void> _toggleUnfavourite(int id) async {
-    if (_pending.contains(id)) return; // cegah double-tap
+    if (_pending.contains(id)) return;
     setState(() => _pending.add(id));
+    final lang = Provider.of<AppLanguage>(context, listen: false);
 
     try {
-      // NOTE: jika backend kamu pakai "/toggle-favourite", ganti baris di bawah ini.
       final url = "${widget.apiUrl}/favourite";
       final response = await http.post(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'id': id, 'is_favourite': 0}), // set 0 (unfav)
+        body: jsonEncode({'id': id, 'is_favourite': 0}),
       );
 
       if (response.statusCode == 200) {
@@ -155,20 +167,20 @@ class _FavoritPageState extends State<FavoritPage> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Dihapus dari favorit")),
+            SnackBar(content: Text(lang.getText("contact_deleted"))),
           );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Gagal update favorit (${response.statusCode})")),
+            SnackBar(content: Text("${lang.getText("failed_edit")} (${response.statusCode})")),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
+          SnackBar(content: Text("${lang.getText("error_msg")}: $e")),
         );
       }
     } finally {
@@ -180,12 +192,14 @@ class _FavoritPageState extends State<FavoritPage> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<AppLanguage>(context, listen: false);
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Kontak Favorit")),
+      appBar: AppBar(title: Text(lang.getText("favorit"))),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : data.isEmpty
-              ? const Center(child: Text("Belum ada kontak favorit"))
+              ? Center(child: Text(lang.getText("no_data")))
               : ListView.builder(
                   itemCount: data.length,
                   itemBuilder: (context, index) {
@@ -202,16 +216,14 @@ class _FavoritPageState extends State<FavoritPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              // LOVE icon (bukan star)
                               icon: const Icon(Icons.favorite, color: Colors.red),
-                              onPressed: _pending.contains(id)
-                                  ? null
-                                  : () => _toggleUnfavourite(id),
-                              tooltip: "Hapus dari favorit",
+                              onPressed: _pending.contains(id) ? null : () => _toggleUnfavourite(id),
+                              tooltip: lang.getText("remove_from_fav"),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete),
                               onPressed: () => showDeleteConfirmDialog(item),
+                              tooltip: lang.getText("delete_contact"),
                             ),
                           ],
                         ),

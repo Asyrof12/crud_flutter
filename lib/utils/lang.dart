@@ -60,6 +60,19 @@ class Lang {
       'menu_about': 'About App',
       'menu_settings': 'Settings',
       'menu_logout': 'Logout',
+      "logout": "Logout",
+      "logout_confirm_msg": "Are you sure you want to logout?",
+      "logout_confirm_title": "Logout Confirmation",
+
+      // Favorite
+      "favorit": "Favorite Contacts",
+      "no_data": "No favorite contacts yet",
+      "remove_from_fav": "Remove from Favorite",
+      "confirm_delete": "Confirm Delete",
+      "contact_deleted": "Contact deleted successfully",
+      "failed_delete": "Failed to delete contact",
+      "failed_load": "Failed to load data",
+      "error_msg": "Error",
 
       //Card Home
       "welcome": "Welcome",
@@ -73,20 +86,16 @@ class Lang {
       "add_contact": "Add Contact",
       "name": "Name",
       "add": "Add",
-      "confirm_delete": "Confirm Delete",
       "name_phone_required": "Name and phone must be filled",
       "contact_added": "Contact added successfully",
       "failed_add": "Failed to add contact",
       "contact_updated": "Contact updated successfully",
       "failed_edit": "Failed to edit contact",
-      "contact_deleted": "Contact deleted successfully",
-      "failed_delete": "Failed to delete contact",
-      "error_msg": "Error",
       "invalid_data_format": "Invalid data format",
-      "failed_load": "Failed to load data",
-      "no_data": "No data available",
       "search": "Search"
     },
+
+    
     'id': {
       // General
       'choose_language': 'Pilih Bahasa',
@@ -147,6 +156,21 @@ class Lang {
       'menu_about': 'Tentang Aplikasi',
       'menu_settings': 'Pengaturan',
       'menu_logout': 'Keluar',
+      "logout": "Logout",
+      "logout_confirm_msg": "Apakah kamu yakin ingin logout?",
+      "logout_confirm_title": "Konfirmasi Logout",
+
+      // Favorite
+      "favorit": "Kontak Favorit",
+      "no_data": "Belum ada kontak favorit",
+      "remove_from_fav": "Hapus dari Favorit",
+      "delete_contact": "Hapus Kontak",
+      "confirm_delete": "Konfirmasi Hapus",
+      "delete_contact_q": "Yakin hapus kontak",
+      "contact_deleted": "Kontak berhasil dihapus",
+      "failed_delete": "Gagal menghapus",
+      "failed_load": "Gagal load data",
+      "error_msg": "Error",
 
       //Card Home
       "welcome": "Selamat datang",
@@ -155,23 +179,15 @@ class Lang {
       "no_phone_number": "Tidak ada nomor",
       "created_at": "Dibuat",
       "edit_contact": "Edit Kontak",
-      "delete_contact": "Hapus Kontak",
-      "delete_contact_q": "Hapus kontak",
       "add_contact": "Tambah Kontak",
       "name": "Nama",
       "add": "Tambah",
-      "confirm_delete": "Konfirmasi Hapus",
       "name_phone_required": "Nama dan nomor harus diisi",
       "contact_added": "Berhasil tambah kontak",
       "failed_add": "Gagal tambah kontak",
       "contact_updated": "Kontak berhasil diubah",
       "failed_edit": "Gagal edit kontak",
-      "contact_deleted": "Data berhasil dihapus",
-      "failed_delete": "Gagal menghapus",
-      "error_msg": "Error",
       "invalid_data_format": "Data tidak dalam format list",
-      "failed_load": "Gagal load data",
-      "no_data": "Tidak ada data",
       "search": "Pencarian"
     },
   };

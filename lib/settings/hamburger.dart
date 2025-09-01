@@ -58,6 +58,18 @@ class CustomHamburger extends StatelessWidget {
                   ),
                 ),
                 PopupMenuItem(
+                  value: 'favorit',
+                  child: Consumer<AppLanguage>(
+                    builder: (context, lang, _) => Row(
+                      children: [
+                        const Icon(Icons.favorite, size: 20),
+                        const SizedBox(width: 8),
+                        Text(lang.getText('favorit')),
+                      ],
+                    ),
+                  ),
+                ),
+                PopupMenuItem(
                   value: 'about',
                   child: Consumer<AppLanguage>(
                     builder: (context, lang, _) => Row(
@@ -81,30 +93,18 @@ class CustomHamburger extends StatelessWidget {
                     ),
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'favorit',
-                  child: Consumer<AppLanguage>(
-                    builder: (context, lang, _) => Row(
-                      children: [
-                        const Icon(Icons.favorite, size: 20),
-                        const SizedBox(width: 8),
-                        Text(lang.getText('favorit')),
-                      ],
-                    ),
-                  ),
-                ),
-                PopupMenuItem(
+                PopupMenuItem<String>(
                   value: 'logout',
                   child: Consumer<AppLanguage>(
                     builder: (context, lang, _) => Row(
                       children: [
-                        const Icon(Icons.logout, size: 20),
+                        const Icon(Icons.logout, size: 20, color: Colors.red),
                         const SizedBox(width: 8),
                         Text(lang.getText('menu_logout')),
                       ],
                     ),
                   ),
-                ),
+                )
               ],
             );
 
@@ -141,12 +141,50 @@ class CustomHamburger extends StatelessWidget {
                 ),
               );
             } else if (selected == 'logout') {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginApp(),
-                ),
+              final lang = Provider.of<AppLanguage>(context, listen: false);
+
+              final confirmed = await showDialog<bool>(
+                context: context,
+                barrierDismissible: false, // wajib pilih salah satu
+                builder: (context) {
+                  return AlertDialog(
+                    title: Row(
+                      children: [
+                        const Icon(Icons.logout, color: Colors.red, size: 28),
+                        const SizedBox(width: 10),
+                        Text(
+                            lang.getText("logout_confirm_title")), // pakai lang
+                      ],
+                    ),
+                    content:
+                        Text(lang.getText("logout_confirm_msg")), // pakai lang
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: Text(lang.getText("cancel")), // pakai lang
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        icon: const Icon(Icons.check),
+                        label: Text(lang.getText("logout")), // pakai lang
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red),
+                      ),
+                    ],
+                  );
+                },
               );
+
+// jika user konfirmasi logout
+              if (confirmed == true) {
+                // panggil service logout jika ada
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginApp(),
+                  ),
+                );
+              }
             }
           },
         );
