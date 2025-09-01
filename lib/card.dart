@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'settings/hamburger.dart';
 import 'package:provider/provider.dart';
 import '../providers/AppLanguage.dart';
+import 'package:flutter/services.dart';
 
 class MyCard extends StatefulWidget {
   final String apiUrl;
@@ -187,7 +188,7 @@ class _MyCardState extends State<MyCard> {
     final userId = prefs.getInt('id');
 
     final name = nameController.text.trim();
-    final phone = phoneController.text.trim();
+    final phone = phoneController.text.trim().replaceAll("-", "");
 
     if (name.isEmpty || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -251,7 +252,7 @@ class _MyCardState extends State<MyCard> {
     final userId = prefs.getInt('id');
 
     final name = nameController.text.trim();
-    final phone = phoneController.text.trim();
+    final phone = phoneController.text.trim().replaceAll("-", "");
 
     if (name.isEmpty || phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -385,7 +386,7 @@ class _MyCardState extends State<MyCard> {
   void showAddContactModal() {
     final appLang = Provider.of<AppLanguage>(context, listen: false);
     final localNameController = TextEditingController();
-    final localPhoneController = TextEditingController();
+    final localPhoneController = TextEditingController(); // ← tambahkan ini
     final scaffoldContext = context;
 
     showDialog(
@@ -408,12 +409,18 @@ class _MyCardState extends State<MyCard> {
                         labelText: appLang.getText("name"),
                       ),
                     ),
+                    const SizedBox(height: 12),
                     TextField(
-                      controller: localPhoneController,
+                      controller:
+                          localPhoneController, // ← pakai local controller
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly, // hanya angka
+                        PhoneNumberFormatter(), // auto "-"
+                      ],
                       decoration: InputDecoration(
                         labelText: appLang.getText("phone"),
                       ),
-                      keyboardType: TextInputType.phone,
                     ),
                   ],
                 ),
@@ -429,15 +436,16 @@ class _MyCardState extends State<MyCard> {
                       ? null
                       : () async {
                           final name = localNameController.text.trim();
-                          final phone = localPhoneController.text.trim();
+                          // HAPUS strip sebelum kirim
+                          final phone = localPhoneController.text
+                              .trim()
+                              .replaceAll("-", "");
 
                           if (name.isEmpty || phone.isEmpty) {
                             ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                               SnackBar(
-                                content: Text(
-                                  appLang.getText("name_phone_required"),
-                                ),
-                              ),
+                                  content: Text(
+                                      appLang.getText("name_phone_required"))),
                             );
                             return;
                           }
@@ -448,13 +456,23 @@ class _MyCardState extends State<MyCard> {
                             final prefs = await SharedPreferences.getInstance();
                             final userId = prefs.getInt('id');
 
+                            if (userId == null) {
+                              ScaffoldMessenger.of(scaffoldContext)
+                                  .showSnackBar(
+                                const SnackBar(
+                                    content: Text("User belum login!")),
+                              );
+                              setState(() => isAdding = false);
+                              return;
+                            }
+
                             final url = "${widget.apiUrl}/add-phone";
                             final response = await http.post(
                               Uri.parse(url),
                               headers: {'Content-Type': 'application/json'},
                               body: jsonEncode({
                                 'name': name,
-                                'phone': phone,
+                                'phone': phone, // ← sudah bersih tanpa "-"
                                 'idUser': userId,
                               }),
                             );
@@ -464,9 +482,8 @@ class _MyCardState extends State<MyCard> {
                               ScaffoldMessenger.of(scaffoldContext)
                                   .showSnackBar(
                                 SnackBar(
-                                  content:
-                                      Text(appLang.getText("contact_added")),
-                                ),
+                                    content:
+                                        Text(appLang.getText("contact_added"))),
                               );
                               Navigator.of(dialogContext).pop();
                               fetchData();
@@ -483,10 +500,8 @@ class _MyCardState extends State<MyCard> {
                           } catch (e) {
                             ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                               SnackBar(
-                                content: Text(
-                                  "${appLang.getText("error_msg")}: $e",
-                                ),
-                              ),
+                                  content: Text(
+                                      "${appLang.getText("error_msg")}: $e")),
                             );
                           } finally {
                             setState(() => isAdding = false);
@@ -497,9 +512,7 @@ class _MyCardState extends State<MyCard> {
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : Text(appLang.getText("add")),
                 ),
@@ -514,7 +527,7 @@ class _MyCardState extends State<MyCard> {
   void showEditContactModal(Map contact) {
     final appLang = Provider.of<AppLanguage>(context, listen: false);
     nameController.text = contact['name'] ?? '';
-    phoneController.text = contact['phone'] ?? '';
+    phoneController.text = formatPhone(contact['phone'] ?? '');
     final idController =
         TextEditingController(text: contact['id']?.toString() ?? '');
 
@@ -540,6 +553,10 @@ class _MyCardState extends State<MyCard> {
                   decoration:
                       InputDecoration(labelText: appLang.getText("phone")),
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly, // hanya angka
+                    PhoneNumberFormatter(), // format otomatis kasih tanda -
+                  ],
                 ),
               ],
             ),
@@ -749,8 +766,13 @@ class _MyCardState extends State<MyCard> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(item['phone'] ??
-                                          appLang.getText("no_phone_number")),
+                                      Text(
+                                        item['phone'] != null &&
+                                                item['phone']!.isNotEmpty
+                                            ? formatPhone(item['phone']!)
+                                            : appLang
+                                                .getText("no_phone_number"),
+                                      ),
                                       const SizedBox(height: 4),
                                       Text(
                                         "${appLang.getText("created_at")}: ${formatDate(item['created_at'])}",
@@ -837,4 +859,37 @@ class _MyCardState extends State<MyCard> {
           ),
         ));
   }
+}
+
+class PhoneNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    var digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    var newText = '';
+
+    for (int i = 0; i < digits.length; i++) {
+      newText += digits[i];
+      if (i == 3 || i == 7) {
+        newText += '-';
+      }
+    }
+
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
+  }
+}
+
+String formatPhone(String phone) {
+  var digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+  var newText = '';
+  for (int i = 0; i < digits.length; i++) {
+    newText += digits[i];
+    if (i == 3 || i == 7) {
+      newText += '-';
+    }
+  }
+  return newText;
 }
