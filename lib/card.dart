@@ -553,6 +553,10 @@ class _MyCardState extends State<MyCard> {
                   decoration:
                       InputDecoration(labelText: appLang.getText("phone")),
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly, // hanya angka
+                    PhoneNumberFormatter(), // format otomatis kasih tanda -
+                  ],
                 ),
               ],
             ),
