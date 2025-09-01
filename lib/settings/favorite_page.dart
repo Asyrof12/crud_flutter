@@ -12,9 +12,20 @@ class FavoritPage extends StatefulWidget {
 }
 
 class _FavoritPageState extends State<FavoritPage> {
-  List data = [];
-  List<String> favorites = [];
+  List<Map<String, dynamic>> data = [];
   bool isLoading = true;
+
+  // track id yang sedang diproses agar tidak double klik
+  final Set<int> _pending = {};
+
+  int _toInt(dynamic v) {
+    if (v is int) return v;
+    if (v is String) return int.tryParse(v) ?? 0;
+    if (v is bool) return v ? 1 : 0;
+    return 0;
+  }
+
+  bool _isFav(Map<String, dynamic> item) => _toInt(item['is_favourite']) == 1;
 
   @override
   void initState() {
@@ -24,7 +35,6 @@ class _FavoritPageState extends State<FavoritPage> {
 
   Future<void> _loadFavorites() async {
     final prefs = await SharedPreferences.getInstance();
-    final favs = prefs.getStringList('favorites') ?? [];
     final userId = prefs.getInt('id');
 
     if (userId == null) {
@@ -35,17 +45,21 @@ class _FavoritPageState extends State<FavoritPage> {
       return;
     }
 
-    final url = "${widget.apiUrl}/list-all?saved_by=$userId";
-    final response = await http.get(Uri.parse(url));
+    final url = "${widget.apiUrl}/phone-saved-by";
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"idUser": userId.toString()}),
+    );
 
     if (response.statusCode == 200) {
       final parsed = jsonDecode(response.body);
       final allData = parsed is List ? parsed : (parsed['data'] ?? []);
+      final list = List<Map<String, dynamic>>.from(allData);
+
       setState(() {
-        favorites = favs;
-        data = allData
-            .where((item) => favs.contains(item['id'].toString()))
-            .toList();
+        // ambil hanya data yang favorit (tahan terhadap '1' atau 1)
+        data = list.where(_isFav).toList();
         isLoading = false;
       });
     } else {
@@ -56,23 +70,8 @@ class _FavoritPageState extends State<FavoritPage> {
     }
   }
 
-  /// toggle favorite
-  Future<void> _toggleFavorite(String id) async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      if (favorites.contains(id)) {
-        favorites.remove(id);
-        data.removeWhere((item) => item['id'].toString() == id);
-      } else {
-        favorites.add(id);
-      }
-    });
-    await prefs.setStringList('favorites', favorites);
-  }
-
   Future<void> _deleteContact(Map item) async {
-    final prefs = await SharedPreferences.getInstance();
-    final id = int.parse(item['id'].toString());
+    final id = _toInt(item['id']);
 
     try {
       final response = await http.post(
@@ -83,11 +82,8 @@ class _FavoritPageState extends State<FavoritPage> {
 
       if (response.statusCode == 200) {
         setState(() {
-          data.removeWhere((c) => c['id'].toString() == id.toString());
-          favorites.remove(id.toString());
+          data.removeWhere((c) => _toInt(c['id']) == id);
         });
-
-        await prefs.setStringList('favorites', favorites);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -101,8 +97,8 @@ class _FavoritPageState extends State<FavoritPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content:
-                    Text("Gagal hapus kontak (error ${response.statusCode})")),
+              content: Text("Gagal hapus kontak (error ${response.statusCode})"),
+            ),
           );
         }
       }
@@ -115,7 +111,6 @@ class _FavoritPageState extends State<FavoritPage> {
     }
   }
 
-  /// delete contact confirm
   void showDeleteConfirmDialog(Map item) {
     showDialog(
       context: context,
@@ -125,18 +120,13 @@ class _FavoritPageState extends State<FavoritPage> {
           content: Text("Yakin hapus ${item['name']}?"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(), // langsung nutup
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text("Batal"),
             ),
             TextButton(
               onPressed: () {
-                // Tutup dialog dulu
                 Navigator.of(context).pop();
-
-                // Jalankan hapus setelah dialog benar² tertutup
-                Future.microtask(() {
-                  _deleteContact(item);
-                });
+                Future.microtask(() => _deleteContact(item));
               },
               child: const Text("Hapus"),
             ),
@@ -144,6 +134,48 @@ class _FavoritPageState extends State<FavoritPage> {
         );
       },
     );
+  }
+
+  Future<void> _toggleUnfavourite(int id) async {
+    if (_pending.contains(id)) return; // cegah double-tap
+    setState(() => _pending.add(id));
+
+    try {
+      // NOTE: jika backend kamu pakai "/toggle-favourite", ganti baris di bawah ini.
+      final url = "${widget.apiUrl}/favourite";
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'id': id, 'is_favourite': 0}), // set 0 (unfav)
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          data.removeWhere((c) => _toInt(c['id']) == id);
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Dihapus dari favorit")),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Gagal update favorit (${response.statusCode})")),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _pending.remove(id));
+      }
+    }
   }
 
   @override
@@ -158,25 +190,24 @@ class _FavoritPageState extends State<FavoritPage> {
                   itemCount: data.length,
                   itemBuilder: (context, index) {
                     final item = data[index];
-                    final isFav = favorites.contains(item['id'].toString());
+                    final id = _toInt(item['id']);
 
                     return Card(
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       child: ListTile(
                         leading: const Icon(Icons.person),
-                        title: Text(item['name'] ?? "-"),
-                        subtitle: Text(item['phone'] ?? "-"),
+                        title: Text(item['name']?.toString() ?? "-"),
+                        subtitle: Text(item['phone']?.toString() ?? "-"),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: Icon(
-                                isFav ? Icons.favorite : Icons.favorite_border,
-                                color: Colors.red,
-                              ),
-                              onPressed: () =>
-                                  _toggleFavorite(item['id'].toString()),
+                              // LOVE icon (bukan star)
+                              icon: const Icon(Icons.favorite, color: Colors.red),
+                              onPressed: _pending.contains(id)
+                                  ? null
+                                  : () => _toggleUnfavourite(id),
+                              tooltip: "Hapus dari favorit",
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete),
